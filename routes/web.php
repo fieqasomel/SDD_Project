@@ -136,3 +136,8 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
+
+// Test route for sidebar (you can remove this later)
+Route::middleware(['multiauth'])->get('/test-sidebar', function () {
+    return view('test-sidebar');
+})->name('test.sidebar');
