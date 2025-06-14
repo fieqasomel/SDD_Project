@@ -1,8 +1,9 @@
-@extends('layouts.app')
-
-@section('title', 'Inquiry Details - ' . $inquiry->I_ID)
-
-@section('content')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Inquiry Details') }} - {{ $inquiry->I_ID }}
+        </h2>
+    </x-slot>
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -340,9 +341,212 @@
     </div>
 @endif
 
+<style>
+@media print {
+    /* Sembunyikan elemen yang tidak perlu untuk print */
+    .no-print,
+    button,
+    .bg-gray-50,
+    nav,
+    header,
+    .shadow-lg,
+    .hover\:shadow-xl,
+    .transform,
+    .transition-all,
+    .duration-300 {
+        display: none !important;
+    }
+    
+    /* Styling untuk print */
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12pt !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Container untuk print */
+    .print-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+    }
+    
+    /* Header untuk print */
+    .print-header {
+        text-align: center !important;
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 10px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    /* Info box untuk print */
+    .print-info {
+        border: 1px solid #000 !important;
+        padding: 10px !important;
+        margin-bottom: 15px !important;
+        background: white !important;
+    }
+    
+    /* Status badge untuk print */
+    .print-status {
+        border: 1px solid #000 !important;
+        padding: 5px 10px !important;
+        display: inline-block !important;
+        font-weight: bold !important;
+        background: white !important;
+        color: black !important;
+    }
+    
+    /* Sembunyikan gradient dan warna background */
+    .bg-gradient-to-r,
+    .bg-blue-50,
+    .bg-green-50,
+    .bg-yellow-50,
+    .bg-red-50,
+    .bg-gray-50 {
+        background: white !important;
+        color: black !important;
+    }
+    
+    /* Table styling untuk print */
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+    
+    th, td {
+        border: 1px solid #000 !important;
+        padding: 8px !important;
+        text-align: left !important;
+    }
+    
+    /* Icons untuk print */
+    .fas {
+        display: none !important;
+    }
+}
+</style>
+
 <script>
     function printInquiry() {
-        window.print();
+        // Buat content untuk print dengan maklumat penting sahaja
+        const printContent = `
+            <div class="print-container">
+                <div class="print-header">
+                    <h1>INQUIRY DETAILS</h1>
+                    <p>System SDD - Inquiry Management</p>
+                </div>
+                
+                <div class="print-info">
+                    <table>
+                        <tr>
+                            <td><strong>Inquiry ID:</strong></td>
+                            <td>{{ $inquiry->I_ID }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Title:</strong></td>
+                            <td>{{ $inquiry->I_Title }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Category:</strong></td>
+                            <td>{{ $inquiry->I_Category }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>{{ $inquiry->I_Status }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Date Submitted:</strong></td>
+                            <td>{{ $inquiry->I_Date ? $inquiry->I_Date->format('d M Y') : 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Source:</strong></td>
+                            <td>{{ $inquiry->I_Source ?? 'N/A' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="print-info">
+                    <h3>Description:</h3>
+                    <p>{{ $inquiry->I_Description }}</p>
+                </div>
+                
+                @if($inquiry->publicUser)
+                <div class="print-info">
+                    <h3>Submitted by:</h3>
+                    <table>
+                        <tr>
+                            <td><strong>Name:</strong></td>
+                            <td>{{ $inquiry->publicUser->PU_Name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ $inquiry->publicUser->PU_Email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Phone:</strong></td>
+                            <td>{{ $inquiry->publicUser->PU_PhoneNum }}</td>
+                        </tr>
+                    </table>
+                </div>
+                @endif
+                
+                @if($inquiry->complaint && $inquiry->complaint->agency)
+                <div class="print-info">
+                    <h3>Assigned to:</h3>
+                    <table>
+                        <tr>
+                            <td><strong>Agency:</strong></td>
+                            <td>{{ $inquiry->complaint->agency->A_Name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Category:</strong></td>
+                            <td>{{ $inquiry->complaint->agency->A_Category }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Assigned Date:</strong></td>
+                            <td>{{ $inquiry->complaint->C_AssignedDate ? $inquiry->complaint->C_AssignedDate->format('d M Y') : 'N/A' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                @endif
+                
+                <div style="margin-top: 30px; text-align: center; font-size: 10pt;">
+                    <p>Generated on: {{ now()->format('d M Y, H:i') }}</p>
+                </div>
+            </div>
+        `;
+        
+        // Buat window baru untuk print
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Inquiry Details - {{ $inquiry->I_ID }}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+                        .print-container { max-width: 800px; margin: 0 auto; }
+                        .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                        .print-info { border: 1px solid #000; padding: 15px; margin-bottom: 15px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                        h1 { margin: 0; font-size: 24pt; }
+                        h3 { margin: 0 0 10px 0; font-size: 14pt; }
+                    </style>
+                </head>
+                <body>
+                    ${printContent}
+                </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        printWindow.print();
+        printWindow.close();
     }
     
     function exportInquiry() {
@@ -350,4 +554,4 @@
         alert('PDF export functionality would be implemented here');
     }
 </script>
-@endsection
+</x-app-layout>

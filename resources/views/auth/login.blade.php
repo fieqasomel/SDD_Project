@@ -16,6 +16,16 @@
             @csrf
 
             <div>
+                <x-label for="user_type" value="{{ __('User Type') }}" />
+                <select id="user_type" name="user_type" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                    <option value="">Select User Type</option>
+                    <option value="public_user" {{ old('user_type') === 'public_user' ? 'selected' : '' }}>Public User</option>
+                    <option value="agency" {{ old('user_type') === 'agency' ? 'selected' : '' }}>Agency</option>
+                    <option value="mcmc" {{ old('user_type') === 'mcmc' ? 'selected' : '' }}>MCMC</option>
+                </select>
+            </div>
+
+            <div class="mt-4">
                 <x-label for="email" value="{{ __('Email') }}" />
                 <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
             </div>

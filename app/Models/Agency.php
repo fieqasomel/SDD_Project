@@ -59,7 +59,7 @@ class Agency extends Authenticatable
     // Override the key name for sessions
     public function getKey()
     {
-        return $this->A_Email;
+        return $this->A_ID;
     }
 
     // Mutator to hash password

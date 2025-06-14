@@ -1,8 +1,9 @@
-@extends('layouts.app')
-
-@section('title', 'Submit New Inquiry')
-
-@section('content')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Submit New Inquiry') }}
+        </h2>
+    </x-slot>
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -172,4 +173,4 @@
         }
     });
 </script>
-@endsection
+</x-app-layout>

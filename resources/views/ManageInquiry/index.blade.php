@@ -1,8 +1,9 @@
-@extends('layouts.app')
-
-@section('title', 'Manage Inquiries')
-
-@section('content')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Manage Inquiries') }}
+        </h2>
+    </x-slot>
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -198,7 +199,7 @@
                                                 <a href="{{ route('inquiries.show', $inquiry->I_ID) }}" 
                                                    class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                                                    title="View">
-                                                    <i class="fas fa-eye"></i>
+                                                    <i class="fas fa-eye mr-1"></i>View
                                                 </a>
                                                 
                                                 @if($userType === 'mcmc')
@@ -206,13 +207,13 @@
                                                         <a href="{{ route('assignments.assign', $inquiry->I_ID) }}" 
                                                            class="inline-flex items-center px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                                                            title="Assign to Agency">
-                                                            <i class="fas fa-user-plus"></i>
+                                                            <i class="fas fa-user-plus mr-1"></i>Assign
                                                         </a>
                                                     @else
                                                         <a href="{{ route('assignments.view', $inquiry->complaint->C_ID) }}" 
                                                                class="inline-flex items-center px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                                                            title="View Assignment">
-                                                            <i class="fas fa-tasks"></i>
+                                                            <i class="fas fa-tasks mr-1"></i>Assignment
                                                         </a>
                                                     @endif
                                                 @endif
@@ -221,7 +222,7 @@
                                                     <a href="{{ route('inquiries.edit', $inquiry->I_ID) }}" 
                                                        class="inline-flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                                                        title="Edit">
-                                                        <i class="fas fa-edit"></i>
+                                                        <i class="fas fa-edit mr-1"></i>Edit
                                                     </a>
                                                 @endif
                                                 @if($inquiry->canBeDeleted() && ($userType === 'public' || $userType === 'mcmc'))
@@ -233,7 +234,7 @@
                                                         <button type="submit" 
                                                                 class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                                                                 title="Delete">
-                                                            <i class="fas fa-trash"></i>
+                                                            <i class="fas fa-trash mr-1"></i>Delete
                                                         </button>
                                                     </form>
                                                 @endif
@@ -301,4 +302,4 @@
         </div>
     </div>
 @endif
-@endsection
+</x-app-layout>

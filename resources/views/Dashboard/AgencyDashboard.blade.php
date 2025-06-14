@@ -1,8 +1,9 @@
-@extends('layouts.app')
-
-@section('title', 'Agency Dashboard - SDD System')
-
-@section('content')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Agency Dashboard') }}
+        </h2>
+    </x-slot>
 <!-- Hero Section -->
 <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -196,4 +197,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-app-layout>

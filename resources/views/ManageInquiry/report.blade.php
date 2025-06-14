@@ -1,8 +1,9 @@
-@extends('layouts.app')
-
-@section('title', 'Inquiry Report')
-
-@section('content')
+ <x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Inquiry Report') }}
+        </h2>
+    </x-slot>
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -259,9 +260,116 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Print function
+    // Print function - hanya maklumat penting
     function printReport() {
-        window.print();
+        const printContent = `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
+                    <h1 style="margin: 0; font-size: 24pt;">INQUIRY REPORT</h1>
+                    <p style="margin: 5px 0; font-size: 12pt;">System SDD - Generated on {{ now()->format('d M Y, H:i') }}</p>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h2 style="font-size: 16pt; margin-bottom: 10px;">Report Summary:</h2>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Total Inquiries:</td>
+                            <td style="border: 1px solid #000; padding: 8px;">{{ $inquiries->count() }}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Report Period:</td>
+                            <td style="border: 1px solid #000; padding: 8px;">{{ request('date_from') ? request('date_from').' to '.request('date_to') : 'All Time' }}</td>
+                        </tr>
+                        @if(request('status'))
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Filter by Status:</td>
+                            <td style="border: 1px solid #000; padding: 8px;">{{ request('status') }}</td>
+                        </tr>
+                        @endif
+                        @if(request('category'))
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Filter by Category:</td>
+                            <td style="border: 1px solid #000; padding: 8px;">{{ request('category') }}</td>
+                        </tr>
+                        @endif
+                    </table>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h2 style="font-size: 16pt; margin-bottom: 10px;">Inquiry List:</h2>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #f5f5f5;">
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left;">ID</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left;">Title</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left;">Category</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left;">Status</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($inquiries as $inquiry)
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px;">{{ $inquiry->I_ID }}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">{{ Str::limit($inquiry->I_Title, 30) }}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">{{ $inquiry->I_Category }}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">{{ $inquiry->I_Status }}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">{{ $inquiry->I_Date ? $inquiry->I_Date->format('d/m/Y') : 'N/A' }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                
+                @if(isset($stats))
+                <div style="margin-bottom: 20px;">
+                    <h2 style="font-size: 16pt; margin-bottom: 10px;">Statistics:</h2>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Pending:</td>
+                            <td style="border: 1px solid #000; padding: 8px;">{{ $stats['pending'] ?? 0 }}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">In Progress:</td>
+                            <td style="border: 1px solid #000; padding: 8px;">{{ $stats['in_progress'] ?? 0 }}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Resolved:</td>
+                            <td style="border: 1px solid #000; padding: 8px;">{{ $stats['resolved'] ?? 0 }}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; font-weight: bold;">Closed:</td>
+                            <td style="border: 1px solid #000; padding: 8px;">{{ $stats['closed'] ?? 0 }}</td>
+                        </tr>
+                    </table>
+                </div>
+                @endif
+            </div>
+        `;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Inquiry Report - {{ now()->format('d M Y') }}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+                        table { border-collapse: collapse; width: 100%; margin-bottom: 15px; }
+                        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                        th { background-color: #f5f5f5; font-weight: bold; }
+                        h1, h2 { margin: 0; }
+                        .text-center { text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    ${printContent}
+                </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        printWindow.print();
+        printWindow.close();
     }
 
     // Category Chart
@@ -355,4 +463,4 @@
         }
     }
 </style>
-@endsection
+</x-app-layout>
