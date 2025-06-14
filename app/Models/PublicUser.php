@@ -68,7 +68,7 @@ class PublicUser extends Authenticatable
     }
 
     // Mutator to hash password
-    public function setPUPasswordAttribute($value)
+    public function setPuPasswordAttribute($value)
     {
         if (!empty($value)) {
             $this->attributes['PU_Password'] = Hash::make($value);

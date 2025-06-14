@@ -25,19 +25,30 @@ class Inquiry extends Model
         'I_Status',
         'I_Source',
         'I_filename',
-        'InfoPath'
+        'InfoPath',
+        'processed_by',
+        'processed_date',
+        'mcmc_notes',
+        'priority_level',
+        'is_serious'
     ];
 
     protected $casts = [
         'I_Date' => 'date',
+        'processed_date' => 'datetime',
+        'is_serious' => 'boolean',
     ];
 
     // Define inquiry statuses
     const STATUS_PENDING = 'Pending';
+    const STATUS_UNDER_REVIEW = 'Under Review';
+    const STATUS_VALIDATED = 'Validated';
+    const STATUS_ASSIGNED = 'Assigned';
     const STATUS_IN_PROGRESS = 'In Progress';
     const STATUS_RESOLVED = 'Resolved';
     const STATUS_CLOSED = 'Closed';
     const STATUS_REJECTED = 'Rejected';
+    const STATUS_NON_SERIOUS = 'Non-Serious';
 
     // Define inquiry categories
     const CATEGORIES = [
@@ -53,6 +64,12 @@ class Inquiry extends Model
     public function publicUser()
     {
         return $this->belongsTo(PublicUser::class, 'PU_ID', 'PU_ID');
+    }
+
+    // Relationship with MCMC processor
+    public function processor()
+    {
+        return $this->belongsTo(MCMC::class, 'processed_by', 'M_ID');
     }
 
     // Relationship with Progress (if inquiry has progress tracking)

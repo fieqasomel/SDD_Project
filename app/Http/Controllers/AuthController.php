@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use App\Models\PublicUser;
 use App\Models\Agency;
 use App\Models\MCMC;
@@ -203,6 +205,123 @@ class AuthController extends Controller
         return redirect()->route('login')->with('success', 'Registration successful! Please login.');
     }
 
+    // Password Recovery Functions
+    public function showForgotPasswordForm()
+    {
+        return view('auth.forgot-password');
+    }
+
+    public function sendPasswordResetLink(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'user_type' => 'required|in:public_user,agency,mcmc'
+        ]);
+
+        $email = $request->email;
+        $userType = $request->user_type;
+        $user = null;
+
+        // Find user based on type
+        switch ($userType) {
+            case 'public_user':
+                $user = PublicUser::where('PU_Email', $email)->first();
+                break;
+            case 'agency':
+                $user = Agency::where('A_Email', $email)->first();
+                break;
+            case 'mcmc':
+                $user = MCMC::where('M_Email', $email)->first();
+                break;
+        }
+
+        if (!$user) {
+            return back()->withErrors(['email' => 'We could not find a user with that email address.']);
+        }
+
+        // Generate reset token
+        $token = Str::random(64);
+        
+        // Store reset token in database (you might want to create a password_resets table)
+        // For now, we'll use session storage
+        session(['password_reset_token' => $token, 'password_reset_email' => $email, 'password_reset_type' => $userType]);
+
+        // Send email with reset link
+        $this->sendPasswordResetEmail($user, $token, $userType);
+
+        return back()->with('status', 'Password reset link sent to your email address.');
+    }
+
+    public function showResetPasswordForm(Request $request)
+    {
+        $token = $request->route('token');
+        $email = $request->query('email');
+        $userType = $request->query('type');
+
+        // Verify token
+        if (session('password_reset_token') !== $token || 
+            session('password_reset_email') !== $email || 
+            session('password_reset_type') !== $userType) {
+            return redirect()->route('login')->withErrors(['error' => 'Invalid reset token.']);
+        }
+
+        return view('auth.reset-password', compact('token', 'email', 'userType'));
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'user_type' => 'required|in:public_user,agency,mcmc',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        // Verify token
+        if (session('password_reset_token') !== $request->token || 
+            session('password_reset_email') !== $request->email || 
+            session('password_reset_type') !== $request->user_type) {
+            return back()->withErrors(['error' => 'Invalid reset token.']);
+        }
+
+        $userType = $request->user_type;
+        $user = null;
+
+        // Find and update user password
+        switch ($userType) {
+            case 'public_user':
+                $user = PublicUser::where('PU_Email', $request->email)->first();
+                if ($user) {
+                    $user->PU_Password = $request->password;
+                    $user->save();
+                }
+                break;
+            case 'agency':
+                $user = Agency::where('A_Email', $request->email)->first();
+                if ($user) {
+                    $user->A_Password = $request->password;
+                    $user->save();
+                }
+                break;
+            case 'mcmc':
+                $user = MCMC::where('M_Email', $request->email)->first();
+                if ($user) {
+                    $user->M_Password = $request->password;
+                    $user->save();
+                }
+                break;
+        }
+
+        if (!$user) {
+            return back()->withErrors(['email' => 'User not found.']);
+        }
+
+        // Clear reset session data
+        session()->forget(['password_reset_token', 'password_reset_email', 'password_reset_type']);
+
+        return redirect()->route('login')->with('success', 'Password has been reset successfully.');
+    }
+
     // Logout
     public function logout(Request $request)
     {
@@ -218,5 +337,24 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    // Private helper method
+    private function sendPasswordResetEmail($user, $token, $userType)
+    {
+        try {
+            $resetUrl = route('password.reset', ['token' => $token]) . '?email=' . urlencode($user->getEmailForPasswordReset()) . '&type=' . $userType;
+            
+            Mail::send('emails.password-reset', [
+                'user' => $user,
+                'resetUrl' => $resetUrl,
+                'userType' => $userType
+            ], function ($message) use ($user) {
+                $message->to($user->getEmailForPasswordReset());
+                $message->subject('Password Reset Request - MCMC System');
+            });
+        } catch (\Exception $e) {
+            logger('Failed to send password reset email: ' . $e->getMessage());
+        }
     }
 }

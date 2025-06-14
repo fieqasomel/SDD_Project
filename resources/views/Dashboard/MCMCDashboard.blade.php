@@ -281,6 +281,20 @@
             </div>
             <h3 class="text-xl font-bold text-gray-800">Quick Actions</h3>
         </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <a href="{{ route('mcmc.inquiries.new') }}" class="flex items-center justify-center px-4 py-3 border-2 border-yellow-200 text-yellow-600 font-semibold rounded-lg hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200">
+                <i class="fas fa-exclamation-circle mr-2"></i>New Inquiries
+            </a>
+            <a href="{{ route('mcmc.inquiries.processed') }}" class="flex items-center justify-center px-4 py-3 border-2 border-green-200 text-green-600 font-semibold rounded-lg hover:bg-green-50 hover:border-green-300 transition-all duration-200">
+                <i class="fas fa-check-circle mr-2"></i>Processed
+            </a>
+            <a href="{{ route('mcmc.inquiry-reports.generate') }}" class="flex items-center justify-center px-4 py-3 border-2 border-blue-200 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
+                <i class="fas fa-chart-line mr-2"></i>Generate Reports
+            </a>
+            <a href="{{ route('mcmc.inquiry-activity.index') }}" class="flex items-center justify-center px-4 py-3 border-2 border-purple-200 text-purple-600 font-semibold rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-all duration-200">
+                <i class="fas fa-history mr-2"></i>Activity Log
+            </a>
+        </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <a href="{{ route('inquiries.index', ['status' => 'Pending']) }}" class="flex items-center justify-center px-4 py-3 border-2 border-red-200 text-red-600 font-semibold rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200">
                 <i class="fas fa-clock mr-2"></i>View Pending

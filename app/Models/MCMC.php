@@ -75,4 +75,16 @@ class MCMC extends Authenticatable
     {
         return $this->M_Password;
     }
+
+    // Relationships
+    public function processedInquiries()
+    {
+        return $this->hasMany(Inquiry::class, 'processed_by', 'M_ID');
+    }
+
+    // Activity logs for audit trail
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class, 'user_id', 'M_ID');
+    }
 }

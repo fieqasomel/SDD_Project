@@ -9,11 +9,20 @@
         <form method="POST" action="{{ route('password.update') }}">
             @csrf
 
-            <input type="hidden" name="token" value="{{ $request->route('token') }}">
+            <input type="hidden" name="token" value="{{ $token }}">
+            <input type="hidden" name="user_type" value="{{ $userType }}">
 
             <div class="block">
+                <x-label for="user_type_display" value="{{ __('User Type') }}" />
+                <x-input id="user_type_display" class="block mt-1 w-full bg-gray-100" type="text" 
+                    value="{{ $userType === 'public_user' ? 'Public User' : ($userType === 'agency' ? 'Agency' : 'MCMC Staff') }}" 
+                    disabled />
+            </div>
+
+            <div class="block mt-4">
                 <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
+                <x-input id="email" class="block mt-1 w-full bg-gray-100" type="email" name="email" 
+                    :value="old('email', $email)" required autofocus autocomplete="username" readonly />
             </div>
 
             <div class="mt-4">
