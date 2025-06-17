@@ -36,10 +36,12 @@ class ProgressController extends Controller
                          ->with('success', 'Progress updated successfully.');
     }
 
-    public function view($id)
-    {
-        $progress = Progress::where('inquiry_id', $id)->orderBy('updated_date', 'desc')->get();
-        $inquiry = Inquiry::findOrFail($id);
-        return view('ManageProgress.ViewInquiryProgress', compact('progress', 'inquiry'));
-    }
+public function view(Request $request, $inquiry_id)
+{
+    $progressRecords = Progress::where('inquiry_id', $inquiry_id)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+
+    return view('ManageProgress.ViewInquiryProgress', compact('progressRecords'));
 }
+
