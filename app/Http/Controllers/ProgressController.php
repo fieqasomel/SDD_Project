@@ -157,13 +157,5 @@ class ProgressController extends Controller
     return view('Notification.MCMCAlertsView', compact('alerts'));
    }  
   
-     public function update(Request $request, $id)
-    {
-    $inquiry = Inquiry::findOrFail($id);
-    $inquiry->status = $request->input('status');
-    $inquiry->save();
-
-    return redirect()->back()->with('success', 'Progress updated successfully.');
-    }
 
 }
