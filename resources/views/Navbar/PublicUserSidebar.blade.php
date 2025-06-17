@@ -63,6 +63,15 @@
                 Search Inquiries
             </a>
 
+            <!-- Inquiry History -->
+            <a href="{{ route('inquiries.history') }}" 
+               class="flex items-center px-4 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('inquiries.history') ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-100' }}">
+                <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Inquiry History
+            </a>
+
             <!-- Divider -->
             <div class="border-t border-gray-200 my-4"></div>
 
@@ -186,6 +195,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
                         Submit Inquiry
+                    </a>
+                    
+                    <a href="{{ route('inquiries.history') }}" 
+                       @click="sidebarOpen = false"
+                       class="flex items-center px-4 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('inquiries.history') ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Inquiry History
                     </a>
                 </nav>
             </div>

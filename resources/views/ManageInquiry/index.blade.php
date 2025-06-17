@@ -226,17 +226,11 @@
                                                     </a>
                                                 @endif
                                                 @if($inquiry->canBeDeleted() && ($userType === 'public' || $userType === 'mcmc'))
-                                                    <form method="POST" action="{{ route('inquiries.destroy', $inquiry->I_ID) }}" 
-                                                          class="inline" 
-                                                          onsubmit="return confirm('Are you sure you want to delete this inquiry?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" 
-                                                                class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                                                                title="Delete">
-                                                            <i class="fas fa-trash mr-1"></i>Delete
-                                                        </button>
-                                                    </form>
+                                                    <a href="{{ route('inquiries.delete', $inquiry->I_ID) }}" 
+                                                       class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+                                                       title="Delete">
+                                                        <i class="fas fa-trash mr-1"></i>Delete
+                                                    </a>
                                                 @endif
                                             </div>
                                         </td>

@@ -5,7 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PublicUserController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\MCMCController;
-use App\Http\Controllers\MCMCInquiryController;
+
 use App\Http\Controllers\InquiryController;
 
 Route::get('/', function () {
@@ -72,26 +72,28 @@ Route::middleware('auth:mcmc')->group(function () {
     // Activity Logs
     Route::get('/mcmc/activity-logs', [MCMCController::class, 'viewActivityLogs'])->name('mcmc.activity.index');
     
-    // MCMC Inquiry Management Routes
-    Route::get('/mcmc/inquiries/new', [MCMCInquiryController::class, 'newInquiries'])->name('mcmc.inquiries.new');
-    Route::get('/mcmc/inquiries/processed', [MCMCInquiryController::class, 'processedInquiries'])->name('mcmc.inquiries.processed');
-    Route::get('/mcmc/inquiries/{id}', [MCMCInquiryController::class, 'showInquiry'])->name('mcmc.inquiries.show');
-    Route::post('/mcmc/inquiries/{id}/validate', [MCMCInquiryController::class, 'validateInquiry'])->name('mcmc.inquiries.validate');
+    // MCMC Inquiry Management Routes - using InquiryController
+    Route::get('/mcmc/inquiries/new', [InquiryController::class, 'index'])->name('mcmc.inquiries.new');
+    Route::get('/mcmc/inquiries/processed', [InquiryController::class, 'index'])->name('mcmc.inquiries.processed');
+    Route::get('/mcmc/inquiries/{id}', [InquiryController::class, 'show'])->name('mcmc.inquiries.show');
+    Route::post('/mcmc/inquiries/{id}/validate', [InquiryController::class, 'update'])->name('mcmc.inquiries.validate');
     
-    // MCMC Report Generation
-    Route::get('/mcmc/inquiry-reports', [MCMCInquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.generate');
-    Route::post('/mcmc/inquiry-reports/pdf', [MCMCInquiryController::class, 'exportReportPDF'])->name('mcmc.inquiry-reports.pdf');
-    Route::post('/mcmc/inquiry-reports/excel', [MCMCInquiryController::class, 'exportReportExcel'])->name('mcmc.inquiry-reports.excel');
+    // MCMC Report Generation - using InquiryController
+    Route::get('/mcmc/inquiry-reports', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.generate');
+    Route::post('/mcmc/inquiry-reports/pdf', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.pdf');
+    Route::post('/mcmc/inquiry-reports/excel', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.excel');
     
-    // MCMC Activity Log
-    Route::get('/mcmc/inquiry-activity', [MCMCInquiryController::class, 'activityLog'])->name('mcmc.inquiry-activity.index');
+    // MCMC Activity Log - using history method
+    Route::get('/mcmc/inquiry-activity', [InquiryController::class, 'history'])->name('mcmc.inquiry-activity.index');
 });
 
 // Inquiry Management Routes - Available to all authenticated users
 Route::middleware(['multiauth'])->group(function () {
     // Special routes that need to come before resource routes
     Route::get('inquiries/search', [InquiryController::class, 'search'])->name('inquiries.search');
+    Route::get('inquiries/history', [InquiryController::class, 'history'])->name('inquiries.history');
     Route::get('inquiries/report', [InquiryController::class, 'generateReport'])->name('inquiries.report');
+    Route::get('inquiries/{id}/delete', [InquiryController::class, 'delete'])->name('inquiries.delete');
     
     // Resource routes
     Route::resource('inquiries', InquiryController::class);

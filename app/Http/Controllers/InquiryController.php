@@ -229,9 +229,26 @@ class InquiryController extends Controller
     }
 
     /**
+     * Show the delete confirmation form
+     */
+    public function delete($id)
+    {
+        $user = Auth::user();
+        $userType = $this->getUserType($user);
+        
+        $inquiry = Inquiry::with('publicUser')->findOrFail($id);
+        
+        if (!$this->canDeleteInquiry($inquiry, $user, $userType)) {
+            return redirect()->route('inquiries.index')->with('error', 'You do not have permission to delete this inquiry.');
+        }
+        
+        return view('ManageInquiry.DeleteInquiry', compact('inquiry', 'userType'));
+    }
+
+    /**
      * Remove the specified inquiry
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $user = Auth::user();
         $userType = $this->getUserType($user);
@@ -241,6 +258,45 @@ class InquiryController extends Controller
         if (!$this->canDeleteInquiry($inquiry, $user, $userType)) {
             return redirect()->route('inquiries.index')->with('error', 'You do not have permission to delete this inquiry.');
         }
+
+        // Validate deletion reason and confirmation
+        $request->validate([
+            'deletion_reason' => 'required|string|max:255',
+            'additional_comments' => 'required_if:deletion_reason,Other|nullable|string|max:1000',
+            'optional_comments' => 'nullable|string|max:1000',
+            'confirm_deletion' => 'required|accepted'
+        ], [
+            'deletion_reason.required' => 'Please select a reason for deletion.',
+            'additional_comments.required_if' => 'Please provide additional details when selecting "Other" as the reason.',
+            'confirm_deletion.required' => 'You must confirm the deletion.',
+            'confirm_deletion.accepted' => 'You must confirm the deletion by checking the checkbox.'
+        ]);
+
+        // Prepare deletion log data
+        $deletionReason = $request->deletion_reason;
+        if ($request->deletion_reason === 'Other' && $request->filled('additional_comments')) {
+            $deletionReason = 'Other: ' . $request->additional_comments;
+        } elseif ($request->filled('optional_comments')) {
+            $deletionReason = $request->deletion_reason . ' - ' . $request->optional_comments;
+        }
+
+        // Log the deletion for audit trail
+        $deletionLog = [
+            'inquiry_id' => $inquiry->I_ID,
+            'inquiry_title' => $inquiry->I_Title,
+            'inquiry_category' => $inquiry->I_Category,
+            'inquiry_status' => $inquiry->I_Status,
+            'submitted_by' => $inquiry->publicUser ? $inquiry->publicUser->PU_Name : 'N/A',
+            'submitted_by_email' => $inquiry->publicUser ? $inquiry->publicUser->PU_Email : 'N/A',
+            'deleted_by' => $this->getDeletedByName($user, $userType),
+            'deleted_by_type' => $userType,
+            'deletion_reason' => $deletionReason,
+            'deleted_at' => now(),
+            'inquiry_date' => $inquiry->I_Date
+        ];
+
+        // Store deletion log in a separate table or log file
+        $this->logInquiryDeletion($deletionLog);
         
         // Delete associated file if exists
         if ($inquiry->InfoPath) {
@@ -249,7 +305,53 @@ class InquiryController extends Controller
         
         $inquiry->delete();
         
-        return redirect()->route('inquiries.index')->with('success', 'Inquiry deleted successfully!');
+        return redirect()->route('inquiries.index')->with('success', 'Inquiry deleted successfully! Deletion reason has been logged for audit purposes.');
+    }
+
+    /**
+     * Show inquiry history for the authenticated user
+     */
+    public function history(Request $request)
+    {
+        $user = Auth::user();
+        $userType = $this->getUserType($user);
+        
+        // Build query based on user permissions
+        $query = Inquiry::with(['publicUser', 'progress', 'complaint.agency']);
+        
+        // Apply user-specific filters
+        if ($userType === 'public') {
+            $query->where('PU_ID', $user->PU_ID);
+        } elseif ($userType === 'agency') {
+            // Agency can see inquiries related to their category
+            $query->where('I_Category', $user->A_Category);
+        }
+        // MCMC users can see all inquiries
+
+        // Apply search filters from request
+        if ($request->filled('search')) {
+            $query->search($request->search);
+        }
+        
+        if ($request->filled('status')) {
+            $query->byStatus($request->status);
+        }
+        
+        if ($request->filled('category')) {
+            $query->byCategory($request->category);
+        }
+        
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $query->byDateRange($request->date_from, $request->date_to);
+        }
+        
+        // Order by date (newest first) and paginate
+        $inquiries = $query->orderBy('I_Date', 'desc')->paginate(10);
+        
+        // Get statistics for the current user
+        $stats = $this->getInquiryHistoryStats($userType, $user);
+        
+        return view('ManageInquiry.InquiryHistoryView', compact('inquiries', 'stats', 'userType'));
     }
 
     /**
@@ -353,6 +455,33 @@ class InquiryController extends Controller
     }
 
     /**
+     * Get inquiry history statistics
+     */
+    private function getInquiryHistoryStats($userType, $user)
+    {
+        $baseQuery = Inquiry::query();
+        
+        if ($userType === 'public') {
+            $baseQuery->where('PU_ID', $user->PU_ID);
+        } elseif ($userType === 'agency') {
+            $baseQuery->where('I_Category', $user->A_Category);
+        }
+        
+        return [
+            'total' => (clone $baseQuery)->count(),
+            'pending' => (clone $baseQuery)->byStatus(Inquiry::STATUS_PENDING)->count(),
+            'under_review' => (clone $baseQuery)->byStatus(Inquiry::STATUS_UNDER_REVIEW)->count(),
+            'validated' => (clone $baseQuery)->byStatus(Inquiry::STATUS_VALIDATED)->count(),
+            'assigned' => (clone $baseQuery)->byStatus(Inquiry::STATUS_ASSIGNED)->count(),
+            'in_progress' => (clone $baseQuery)->byStatus(Inquiry::STATUS_IN_PROGRESS)->count(),
+            'resolved' => (clone $baseQuery)->byStatus(Inquiry::STATUS_RESOLVED)->count(),
+            'closed' => (clone $baseQuery)->byStatus(Inquiry::STATUS_CLOSED)->count(),
+            'rejected' => (clone $baseQuery)->byStatus(Inquiry::STATUS_REJECTED)->count(),
+            'non_serious' => (clone $baseQuery)->byStatus(Inquiry::STATUS_NON_SERIOUS)->count(),
+        ];
+    }
+
+    /**
      * Get inquiry statistics for dashboard
      */
     private function getInquiryStats($userType, $user)
@@ -450,5 +579,51 @@ class InquiryController extends Controller
         }
         
         return [];
+    }
+
+    /**
+     * Get the name of the user who deleted the inquiry
+     */
+    private function getDeletedByName($user, $userType)
+    {
+        switch ($userType) {
+            case 'public':
+                return $user->PU_Name ?? 'Public User';
+            case 'agency':
+                return $user->A_Name ?? 'Agency User';
+            case 'mcmc':
+                return $user->M_Name ?? 'MCMC User';
+            default:
+                return 'Unknown User';
+        }
+    }
+
+    /**
+     * Log inquiry deletion for audit purposes
+     */
+    private function logInquiryDeletion($deletionLog)
+    {
+        // Log to Laravel's default log file
+        \Log::info('Inquiry Deletion', $deletionLog);
+
+        // Optionally, you can also store in a database table
+        // This would require creating a deletion_logs table first
+        /*
+        DB::table('inquiry_deletion_logs')->insert([
+            'inquiry_id' => $deletionLog['inquiry_id'],
+            'inquiry_title' => $deletionLog['inquiry_title'],
+            'inquiry_category' => $deletionLog['inquiry_category'],
+            'inquiry_status' => $deletionLog['inquiry_status'],
+            'submitted_by' => $deletionLog['submitted_by'],
+            'submitted_by_email' => $deletionLog['submitted_by_email'],
+            'deleted_by' => $deletionLog['deleted_by'],
+            'deleted_by_type' => $deletionLog['deleted_by_type'],
+            'deletion_reason' => $deletionLog['deletion_reason'],
+            'deleted_at' => $deletionLog['deleted_at'],
+            'inquiry_date' => $deletionLog['inquiry_date'],
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        */
     }
 }
