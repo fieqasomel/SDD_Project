@@ -118,6 +118,9 @@ Route::middleware(['auth:agency,mcmc'])->group(function () {
     Route::post('/inquiry/{id}/progress/update', [\App\Http\Controllers\ProgressController::class, 'update'])->name('inquiry.progress.update');
 });
 
+Route::get('/inquiries/search-by-status', [\App\Http\Controllers\ProgressController::class, 'searchInquiriesByStatus'])->name('inquiries.search.status');
+
+
 
 // Jetstream auth dashboard
 Route::middleware([
