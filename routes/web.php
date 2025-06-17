@@ -106,6 +106,19 @@ Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
     Route::get('assignments/{complaint}/history', [ComplaintController::class, 'trackAssignmentHistory'])->name('assignments.history');
 });
 
+// Inquiry Progress Routes
+Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
+    // Public Users, Agency, MCMC can VIEW progress
+    Route::get('/inquiry/{id}/progress/view', [\App\Http\Controllers\ProgressController::class, 'view'])->name('inquiry.progress.view');
+});
+
+// Only Agency and MCMC can EDIT or UPDATE progress
+Route::middleware(['auth:agency,mcmc'])->group(function () {
+    Route::get('/inquiry/{id}/progress/edit', [\App\Http\Controllers\ProgressController::class, 'edit'])->name('inquiry.progress.edit');
+    Route::post('/inquiry/{id}/progress/update', [\App\Http\Controllers\ProgressController::class, 'update'])->name('inquiry.progress.update');
+});
+
+
 // Jetstream auth dashboard
 Route::middleware([
     'auth:sanctum',
