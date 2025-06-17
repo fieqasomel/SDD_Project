@@ -23,6 +23,11 @@ Route::get('/register', [AuthController::class, 'showRegistrationSelection'])->n
 Route::get('/register/publicuser', [AuthController::class, 'showPublicUserRegistration'])->name('register.publicuser');
 Route::get('/register/agency', [AuthController::class, 'showAgencyRegistration'])->name('register.agency');
 Route::get('/register/mcmc', [AuthController::class, 'showMCMCRegistration'])->name('register.mcmc');
+//arinja
+Route::get('/register1', [PublicUserController::class, 'PublicUserRegistration'])->name('registration');
+Route::get('/register/publicuser', [AuthController::class, 'showPublicUserRegistration'])->name('register.publicuser');
+Route::get('/register/agency', [AuthController::class, 'showAgencyRegistration'])->name('register.agency');
+Route::get('/register/mcmc', [AuthController::class, 'showMCMCRegistration'])->name('register.mcmc');
 
 Route::post('/register/publicuser', [AuthController::class, 'registerPublicUser'])->name('register.publicuser.submit');
 Route::post('/register/agency', [AuthController::class, 'registerAgency'])->name('register.agency.submit');

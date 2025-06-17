@@ -1,5 +1,3 @@
-<!-- resources/views/Registration/PublicUserRegistration.blade.php -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,7 +27,7 @@
             </div>
         @endif
 
-        <form action="{{ route('publicuser.register.submit') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+        <form action="{{ route('register.publicuser') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -66,7 +64,7 @@
             <div>
                 <label class="block mb-1 font-semibold text-gray-700">Gender</label>
                 <select name="PU_Gender" class="w-full border border-gray-300 rounded p-2" required>
-                    <option value="" disabled {{ old('PU_Gender') ? '' : 'selected' }}>Select gender</option>
+                    <option value="" disabled selected>Select gender</option>
                     <option value="Male" {{ old('PU_Gender') == 'Male' ? 'selected' : '' }}>Male</option>
                     <option value="Female" {{ old('PU_Gender') == 'Female' ? 'selected' : '' }}>Female</option>
                 </select>
