@@ -49,45 +49,39 @@
         input[type="submit"]:hover {
             background-color: #0056b3;
         }
+
     </style>
 </head>
 <body>
 
-<h2>Inquiry Progress</h2>
+<h2>Inquiry Progress Records</h2>
 
-<div class="search-bar">
-    <form method="GET" action="{{ route('progress.view', ['inquiry_id' => request('inquiry_id')]) }}">
-        <input type="text" name="inquiry_id" placeholder="Enter Inquiry ID..." value="{{ request('inquiry_id') }}">
-        <input type="submit" value="Search">
-    </form>
-</div>
-
-@if(isset($progressRecords) && count($progressRecords))
-    <table>
-        <thead>
+<table>
+    <thead>
+        <tr>
+            <th>Inquiry ID</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Last Updated</th>
+            <th>Remarks</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse ($progressRecords as $progress)
             <tr>
-                <th>Inquiry ID</th>
-                <th>Status</th>
-                <th>Remarks</th>
-                <th>Updated By</th>
-                <th>Last Updated</th>
+                <td>{{ $progress->I_ID }}</td>
+                <td>{{ $progress->P_Title }}</td>
+                <td>{{ $progress->P_Status }}</td>
+                <td>{{ $progress->P_Date->format('Y-m-d') }}</td>
+                <td>{{ $progress->P_Description }}</td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach ($progressRecords as $progress)
-                <tr>
-                    <td>{{ $progress->inquiry_id }}</td>
-                    <td>{{ $progress->status }}</td>
-                    <td>{{ $progress->comment }}</td>
-                    <td>{{ $progress->updated_by }}</td>
-                    <td>{{ $progress->created_at }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-@elseif(request()->has('inquiry_id'))
-    <p>No progress found for Inquiry ID: <strong>{{ request('inquiry_id') }}</strong></p>
-@endif
+        @empty
+            <tr>
+                <td colspan="5">No progress updates found for this inquiry.</td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
 
 </body>
 </html>
