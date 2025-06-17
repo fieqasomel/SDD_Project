@@ -121,24 +121,6 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
-        'publicusers' => [
-            'provider' => 'publicusers',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
-            'throttle' => 60,
-        ],
-        'agencies' => [
-            'provider' => 'agencies',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
-            'throttle' => 60,
-        ],
-        'mcmcs' => [
-            'provider' => 'mcmcs',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
-            'throttle' => 60,
-        ],
     ],
 
     /*

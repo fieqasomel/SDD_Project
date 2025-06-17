@@ -57,8 +57,8 @@
                                 <label for="public_user" 
                                        class="block p-6 border-2 rounded-2xl cursor-pointer transition-all duration-300 text-center"
                                        :class="selectedUserType === 'public_user' ? 'border-blue-500 bg-blue-50 shadow-lg' : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'">
-                                    <div class="text-4xl text-blue-600 mb-4 group-hover:scale-110 transition-transform duration-300">
-                                       <i class="fas fa-user"></i>
+                                    <div class="text-4xl text-blue-600 mb-3">
+                                        <i class="fas fa-user"></i>
                                     </div>
                                     <h3 class="text-lg font-bold text-gray-800 mb-2">Public User</h3>
                                     <p class="text-sm text-gray-600">General Users</p>

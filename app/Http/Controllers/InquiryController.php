@@ -57,7 +57,7 @@ class InquiryController extends Controller
         // Get statistics for dashboard
         $stats = $this->getInquiryStats($userType, $user);
         
-        return view('ManageInquiry.index', compact('inquiries', 'stats', 'userType'));
+        return view('ManageInquiry.manageInquiries', compact('inquiries', 'stats', 'userType'));
     }
 
     /**
@@ -365,13 +365,25 @@ class InquiryController extends Controller
             $query->where('I_Category', $user->A_Category);
         }
         
-        return [
+        $stats = [
             'total' => $query->count(),
             'pending' => $query->byStatus(Inquiry::STATUS_PENDING)->count(),
             'in_progress' => $query->byStatus(Inquiry::STATUS_IN_PROGRESS)->count(),
             'resolved' => $query->byStatus(Inquiry::STATUS_RESOLVED)->count(),
             'closed' => $query->byStatus(Inquiry::STATUS_CLOSED)->count(),
         ];
+        
+        // Add the statistics needed for the MCMC dashboard
+        $stats['pending_inquiries'] = $stats['pending'];
+        $stats['in_progress_inquiries'] = $stats['in_progress'];
+        $stats['resolved_inquiries'] = $stats['resolved'];
+        
+        // Get inquiries from the current month
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+        $stats['this_month_inquiries'] = Inquiry::whereBetween('I_Date', [$startOfMonth, $endOfMonth])->count();
+        
+        return $stats;
     }
 
     /**
@@ -404,7 +416,7 @@ class InquiryController extends Controller
         } elseif ($userType === 'agency') {
             return $inquiry->I_Category === $user->A_Category;
         } elseif ($userType === 'mcmc') {
-            return true;
+            return true; // MCMC can edit all inquiries
         }
         
         return false;
@@ -422,10 +434,10 @@ class InquiryController extends Controller
         if ($userType === 'public') {
             return $inquiry->PU_ID === $user->PU_ID;
         } elseif ($userType === 'mcmc') {
-            return true;
+            return true; // Only MCMC can delete inquiries in any state
         }
         
-        return false; // Agency users cannot delete inquiries
+        return false;
     }
 
     /**
@@ -433,11 +445,13 @@ class InquiryController extends Controller
      */
     private function getAvailableStatuses($userType)
     {
-        if ($userType === 'agency') {
+        if ($userType === 'public') {
+            return [Inquiry::STATUS_PENDING]; // Public users can only set to pending
+        } elseif ($userType === 'agency') {
             return [
-                Inquiry::STATUS_PENDING,
                 Inquiry::STATUS_IN_PROGRESS,
-                Inquiry::STATUS_RESOLVED
+                Inquiry::STATUS_RESOLVED,
+                Inquiry::STATUS_CLOSED
             ];
         } elseif ($userType === 'mcmc') {
             return [

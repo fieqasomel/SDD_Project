@@ -54,6 +54,26 @@ class PublicUserController extends Controller
     public function dashboard()
     {
         $user = Auth::guard('publicuser')->user();
-        return view('Dashboard.PublicUserDashboard', compact('user'));
+        
+        // Calculate inquiry statistics for the user
+        $stats = [
+            'total' => 0,
+            'pending' => 0,
+            'in_progress' => 0,
+            'resolved' => 0
+        ];
+        
+        if ($user) {
+            // Get all inquiries for this user
+            $inquiries = \App\Models\Inquiry::where('PU_ID', $user->PU_ID)->get();
+            
+            // Calculate statistics
+            $stats['total'] = $inquiries->count();
+            $stats['pending'] = $inquiries->where('I_Status', \App\Models\Inquiry::STATUS_PENDING)->count();
+            $stats['in_progress'] = $inquiries->where('I_Status', \App\Models\Inquiry::STATUS_IN_PROGRESS)->count();
+            $stats['resolved'] = $inquiries->where('I_Status', \App\Models\Inquiry::STATUS_RESOLVED)->count();
+        }
+        
+        return view('Dashboard.PublicUserDashboard', compact('user', 'stats'));
     }
 }
