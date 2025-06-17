@@ -25,7 +25,20 @@ class PublicUserController extends Controller
             'PU_PhoneNum' => 'required|digits_between:10,11',
             'PU_Gender' => 'required|in:Male,Female',
             'PU_Password' => 'required|min:6',
+        ], [
+            // Optional: Custom error messages
+        ], [
+            // 👇 This is what fixes your issue
+            'PU_Name' => 'name',
+            'PU_IC' => 'ic',
+            'PU_Age' => 'age',
+            'PU_Address' => 'address',
+            'PU_Email' => 'email',
+            'PU_PhoneNum' => 'phone',
+            'PU_Gender' => 'gender',
+            'PU_Password' => 'password',
         ]);
+
 
         // Generate unique PU_ID
         $lastUser = PublicUser::orderBy('PU_ID', 'desc')->first();
@@ -51,10 +64,16 @@ class PublicUserController extends Controller
         return redirect()->back()->with('success', "Registration successful! Your ID is: $nextId");
     }
 
+    public function PublicUserRegistration()
+    {
+        return view('Registration.PublicUserRegistration');
+    }
+
+
     public function dashboard()
     {
         $user = Auth::guard('publicuser')->user();
-        
+
         // Calculate inquiry statistics for the user
         $stats = [
             'total' => 0,
@@ -62,18 +81,18 @@ class PublicUserController extends Controller
             'in_progress' => 0,
             'resolved' => 0
         ];
-        
+
         if ($user) {
             // Get all inquiries for this user
             $inquiries = \App\Models\Inquiry::where('PU_ID', $user->PU_ID)->get();
-            
+
             // Calculate statistics
             $stats['total'] = $inquiries->count();
             $stats['pending'] = $inquiries->where('I_Status', \App\Models\Inquiry::STATUS_PENDING)->count();
             $stats['in_progress'] = $inquiries->where('I_Status', \App\Models\Inquiry::STATUS_IN_PROGRESS)->count();
             $stats['resolved'] = $inquiries->where('I_Status', \App\Models\Inquiry::STATUS_RESOLVED)->count();
         }
-        
+
         return view('Dashboard.PublicUserDashboard', compact('user', 'stats'));
     }
 }
