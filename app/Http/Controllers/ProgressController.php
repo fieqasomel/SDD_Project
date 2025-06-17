@@ -46,4 +46,19 @@ class ProgressController extends Controller
 
         return view('ManageProgress.ViewInquiryProgress', compact('progressRecords'));
     }
+
+    public function searchInquiriesByStatus(Request $request)
+{
+    $status = $request->input('status', 'All');
+
+    $query = Inquiry::query();
+
+    if ($status !== 'All') {
+        $query->where('I_Status', $status);
+    }
+
+    $inquiries = $query->orderBy('I_Date', 'desc')->get();
+
+    return view('ManageProgress.SearchByStatus', compact('inquiries', 'status'));
+}
 }
