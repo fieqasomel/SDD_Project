@@ -120,13 +120,11 @@ class ProgressController extends Controller
     return view('Notification.InquiryNotification', compact('notifications'));
     }
 
-    use Carbon\Carbon;
-
-   public function viewMcmcAlerts()
-   {
+    public function viewMcmcAlerts()
+    {
     $now = Carbon::now();
 
-    // Simulate "overdue" alerts: inquiries not updated for 7+ days
+    // Simulate overdue inquiries
     $overdueAlerts = Progress::select(
             'progress.P_Date',
             'inquiry.I_ID',
@@ -145,7 +143,7 @@ class ProgressController extends Controller
             ];
         });
 
-    // Simulate static "system error" alert for example
+    // Example system failure alert
     $systemAlerts = collect([
         [
             'time' => Carbon::parse('2025-06-13 23:45'),
@@ -156,7 +154,6 @@ class ProgressController extends Controller
 
     $alerts = $overdueAlerts->merge($systemAlerts)->sortByDesc('time');
 
-    return view('Notification.McmcAlerts', compact('alerts'));
-    }
-
+    return view('Notification.MCMCAlertsView', compact('alerts'));
+   }  
 }
