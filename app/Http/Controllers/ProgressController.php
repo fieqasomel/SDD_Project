@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Progress;
 use App\Models\Inquiry;
+use Carbon\Carbon;
 
 class ProgressController extends Controller
 {
@@ -118,4 +119,44 @@ class ProgressController extends Controller
 
     return view('Notification.InquiryNotification', compact('notifications'));
     }
+
+    use Carbon\Carbon;
+
+   public function viewMcmcAlerts()
+   {
+    $now = Carbon::now();
+
+    // Simulate "overdue" alerts: inquiries not updated for 7+ days
+    $overdueAlerts = Progress::select(
+            'progress.P_Date',
+            'inquiry.I_ID',
+            'inquiry.I_Title'
+        )
+        ->join('inquiry', 'progress.I_ID', '=', 'inquiry.I_ID')
+        ->where('progress.P_Status', '!=', 'Closed')
+        ->where('progress.P_Date', '<', $now->copy()->subDays(7))
+        ->orderBy('progress.P_Date', 'desc')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'time' => $item->P_Date,
+                'message' => "Inquiry #{$item->I_ID} is overdue. No action taken for 7 days.",
+                'type' => 'Late Inquiry'
+            ];
+        });
+
+    // Simulate static "system error" alert for example
+    $systemAlerts = collect([
+        [
+            'time' => Carbon::parse('2025-06-13 23:45'),
+            'message' => 'System failed to log inquiry submission. Error Code: 502',
+            'type' => 'System Failure'
+        ]
+    ]);
+
+    $alerts = $overdueAlerts->merge($systemAlerts)->sortByDesc('time');
+
+    return view('Notification.McmcAlerts', compact('alerts'));
+    }
+
 }
