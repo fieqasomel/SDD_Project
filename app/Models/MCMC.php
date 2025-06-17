@@ -59,7 +59,7 @@ class MCMC extends Authenticatable
     // Override the key name for sessions
     public function getKey()
     {
-        return $this->M_ID;
+        return $this->M_Email;
     }
 
     // Mutator to hash password
@@ -74,17 +74,5 @@ class MCMC extends Authenticatable
     public function getPasswordAttribute()
     {
         return $this->M_Password;
-    }
-
-    // Relationships
-    public function processedInquiries()
-    {
-        return $this->hasMany(Inquiry::class, 'processed_by', 'M_ID');
-    }
-
-    // Activity logs for audit trail
-    public function activityLogs()
-    {
-        return $this->hasMany(ActivityLog::class, 'user_id', 'M_ID');
     }
 }

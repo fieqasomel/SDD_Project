@@ -64,11 +64,11 @@ class PublicUser extends Authenticatable
     // Override the key name for sessions
     public function getKey()
     {
-        return $this->PU_ID;
+        return $this->PU_Email;
     }
 
     // Mutator to hash password
-    public function setPuPasswordAttribute($value)
+    public function setPUPasswordAttribute($value)
     {
         if (!empty($value)) {
             $this->attributes['PU_Password'] = Hash::make($value);

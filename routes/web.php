@@ -5,7 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PublicUserController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\MCMCController;
+<<<<<<< HEAD
 
+=======
+>>>>>>> b20c6e3d7e5e3fe9b616e16d447a729303ffcebc
 use App\Http\Controllers\InquiryController;
 
 Route::get('/', function () {
@@ -16,12 +19,6 @@ Route::get('/', function () {
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-// Password Recovery Routes
-Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
-Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink'])->name('password.email');
-Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
-Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 
 // Registration Routes
 Route::get('/register', [AuthController::class, 'showRegistrationSelection'])->name('register');
@@ -40,17 +37,11 @@ Route::middleware('auth:publicuser')->group(function () {
 
 Route::middleware('auth:agency')->group(function () {
     Route::get('/agency/dashboard', [AgencyController::class, 'dashboard'])->name('agency.dashboard');
-    
-    // Agency Inquiry Management Routes
-    Route::get('/agency/inquiries', [AgencyController::class, 'inquiries'])->name('agency.inquiries.index');
-    Route::get('/agency/inquiries/history', [AgencyController::class, 'inquiryHistory'])->name('agency.inquiries.history');
-    Route::get('/agency/inquiries/{inquiry}', [AgencyController::class, 'showInquiry'])->name('agency.inquiries.show');
-    Route::post('/agency/inquiries/{inquiry}/update-status', [AgencyController::class, 'updateInquiryStatus'])->name('agency.inquiries.update-status');
-    Route::post('/agency/inquiries/{inquiry}/add-update', [AgencyController::class, 'addInquiryUpdate'])->name('agency.inquiries.add-update');
 });
 
 Route::middleware('auth:mcmc')->group(function () {
     Route::get('/mcmc/dashboard', [MCMCController::class, 'dashboard'])->name('mcmc.dashboard');
+<<<<<<< HEAD
     
     // Agency Management Routes
     Route::get('/mcmc/agencies', [MCMCController::class, 'manageAgencies'])->name('mcmc.agencies.index');
@@ -85,10 +76,12 @@ Route::middleware('auth:mcmc')->group(function () {
     
     // MCMC Activity Log - using history method
     Route::get('/mcmc/inquiry-activity', [InquiryController::class, 'history'])->name('mcmc.inquiry-activity.index');
+=======
+>>>>>>> b20c6e3d7e5e3fe9b616e16d447a729303ffcebc
 });
 
 // Inquiry Management Routes - Available to all authenticated users
-Route::middleware(['multiauth'])->group(function () {
+Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
     // Special routes that need to come before resource routes
     Route::get('inquiries/search', [InquiryController::class, 'search'])->name('inquiries.search');
     Route::get('inquiries/history', [InquiryController::class, 'history'])->name('inquiries.history');
@@ -99,8 +92,8 @@ Route::middleware(['multiauth'])->group(function () {
     Route::resource('inquiries', InquiryController::class);
 });
 
-// Assignment Management Routes - Available to all authenticated users  
-Route::middleware(['multiauth'])->group(function () {
+// Assignment Management Routes - Available to all authenticated users
+Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
     // Assignment management routes
     Route::get('assignments', [App\Http\Controllers\ComplaintController::class, 'index'])->name('assignments.index');
     Route::get('assignments/report', [App\Http\Controllers\ComplaintController::class, 'generateAssignedReport'])->name('assignments.report');
@@ -139,7 +132,12 @@ Route::middleware([
     })->name('dashboard');
 });
 
+<<<<<<< HEAD
+// Home route using the AuthController
+Route::get('/home', [AuthController::class, 'home'])->name('home');
+=======
 // Test route for sidebar (you can remove this later)
 Route::middleware(['multiauth'])->get('/test-sidebar', function () {
     return view('test-sidebar');
 })->name('test.sidebar');
+>>>>>>> 847bd712ee5c51c00a5362abdefcc7e763f5e46a

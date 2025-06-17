@@ -1,9 +1,8 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('MCMC Dashboard') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
+
+@section('title', 'MCMC Dashboard - SDD System')
+
+@section('content')
 <!-- Hero Section -->
 <div class="bg-gradient-to-r from-red-600 to-orange-600 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -26,52 +25,6 @@
 
 <!-- Dashboard Content -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Staff Info Card -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
-        <div class="flex items-center mb-6">
-            <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center mr-4">
-                <i class="fas fa-user-tie text-white text-xl"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800">Staff Information</h2>
-        </div>
-        <div class="grid md:grid-cols-2 gap-6">
-            <div class="space-y-4">
-                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                    <i class="fas fa-user text-red-600 w-5 mr-3"></i>
-                    <span class="text-gray-600 font-medium mr-2">Name:</span>
-                    <span class="text-gray-800 font-semibold">{{ $user->M_Name ?? 'N/A' }}</span>
-                </div>
-                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                    <i class="fas fa-envelope text-red-600 w-5 mr-3"></i>
-                    <span class="text-gray-600 font-medium mr-2">Email:</span>
-                    <span class="text-gray-800 font-semibold">{{ $user->M_Email ?? 'N/A' }}</span>
-                </div>
-                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                    <i class="fas fa-phone text-red-600 w-5 mr-3"></i>
-                    <span class="text-gray-600 font-medium mr-2">Phone:</span>
-                    <span class="text-gray-800 font-semibold">{{ $user->M_PhoneNum ?? 'N/A' }}</span>
-                </div>
-            </div>
-            <div class="space-y-4">
-                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                    <i class="fas fa-briefcase text-red-600 w-5 mr-3"></i>
-                    <span class="text-gray-600 font-medium mr-2">Position:</span>
-                    <span class="text-gray-800 font-semibold">{{ $user->M_Position ?? 'N/A' }}</span>
-                </div>
-                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                    <i class="fas fa-user-circle text-red-600 w-5 mr-3"></i>
-                    <span class="text-gray-600 font-medium mr-2">Username:</span>
-                    <span class="text-gray-800 font-semibold">{{ $user->M_userName ?? 'N/A' }}</span>
-                </div>
-                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                    <i class="fas fa-map-marker-alt text-red-600 w-5 mr-3"></i>
-                    <span class="text-gray-600 font-medium mr-2">Address:</span>
-                    <span class="text-gray-800 font-semibold">{{ $user->M_Address ?? 'N/A' }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- System Statistics -->
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl p-6 shadow-lg">
@@ -281,20 +234,6 @@
             </div>
             <h3 class="text-xl font-bold text-gray-800">Quick Actions</h3>
         </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <a href="{{ route('mcmc.inquiries.new') }}" class="flex items-center justify-center px-4 py-3 border-2 border-yellow-200 text-yellow-600 font-semibold rounded-lg hover:bg-yellow-50 hover:border-yellow-300 transition-all duration-200">
-                <i class="fas fa-exclamation-circle mr-2"></i>New Inquiries
-            </a>
-            <a href="{{ route('mcmc.inquiries.processed') }}" class="flex items-center justify-center px-4 py-3 border-2 border-green-200 text-green-600 font-semibold rounded-lg hover:bg-green-50 hover:border-green-300 transition-all duration-200">
-                <i class="fas fa-check-circle mr-2"></i>Processed
-            </a>
-            <a href="{{ route('mcmc.inquiry-reports.generate') }}" class="flex items-center justify-center px-4 py-3 border-2 border-blue-200 text-blue-600 font-semibold rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all duration-200">
-                <i class="fas fa-chart-line mr-2"></i>Generate Reports
-            </a>
-            <a href="{{ route('mcmc.inquiry-activity.index') }}" class="flex items-center justify-center px-4 py-3 border-2 border-purple-200 text-purple-600 font-semibold rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-all duration-200">
-                <i class="fas fa-history mr-2"></i>Activity Log
-            </a>
-        </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <a href="{{ route('inquiries.index', ['status' => 'Pending']) }}" class="flex items-center justify-center px-4 py-3 border-2 border-red-200 text-red-600 font-semibold rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200">
                 <i class="fas fa-clock mr-2"></i>View Pending
@@ -311,4 +250,4 @@
         </div>
     </div>
 </div>
-</x-app-layout>
+@endsection
