@@ -3,33 +3,91 @@
 <head>
     <title>View Inquiry Progress</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h2 { color: #333; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-        th { background-color: #f5f5f5; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        .search-bar {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            padding: 6px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        input[type="submit"] {
+            padding: 6px 12px;
+            background-color: #007BFF;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
-    <h2>Progress History for Inquiry ID: {{ $inquiry->id }}</h2>
 
+<h2>Inquiry Progress</h2>
+
+<div class="search-bar">
+    <form method="GET" action="{{ route('progress.view', ['inquiry_id' => request('inquiry_id')]) }}">
+        <input type="text" name="inquiry_id" placeholder="Enter Inquiry ID..." value="{{ request('inquiry_id') }}">
+        <input type="submit" value="Search">
+    </form>
+</div>
+
+@if(isset($progressRecords) && count($progressRecords))
     <table>
         <thead>
             <tr>
+                <th>Inquiry ID</th>
                 <th>Status</th>
-                <th>Description</th>
-                <th>Updated Date</th>
+                <th>Remarks</th>
+                <th>Updated By</th>
+                <th>Last Updated</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($progress as $record)
+            @foreach ($progressRecords as $progress)
                 <tr>
-                    <td>{{ $record->status }}</td>
-                    <td>{{ $record->description }}</td>
-                    <td>{{ \Carbon\Carbon::parse($record->updated_date)->format('d-m-Y') }}</td>
+                    <td>{{ $progress->inquiry_id }}</td>
+                    <td>{{ $progress->status }}</td>
+                    <td>{{ $progress->comment }}</td>
+                    <td>{{ $progress->updated_by }}</td>
+                    <td>{{ $progress->created_at }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
+@elseif(request()->has('inquiry_id'))
+    <p>No progress found for Inquiry ID: <strong>{{ request('inquiry_id') }}</strong></p>
+@endif
+
 </body>
 </html>
