@@ -89,5 +89,12 @@ Route::middleware([
     })->name('dashboard');
 });
 
+<<<<<<< HEAD
 // Home route using the AuthController
 Route::get('/home', [AuthController::class, 'home'])->name('home');
+=======
+// Test route for sidebar (you can remove this later)
+Route::middleware(['multiauth'])->get('/test-sidebar', function () {
+    return view('test-sidebar');
+})->name('test.sidebar');
+>>>>>>> 847bd712ee5c51c00a5362abdefcc7e763f5e46a

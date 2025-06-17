@@ -1,8 +1,17 @@
+<<<<<<< HEAD
 @extends('layouts.app')
 
 @section('title', 'Public User Dashboard - MySebenarnya System')
 
 @section('content')
+=======
+<x-app-layout-with-sidebar>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Public User Dashboard') }}
+        </h2>
+    </x-slot>
+>>>>>>> 847bd712ee5c51c00a5362abdefcc7e763f5e46a
 <!-- Hero Section -->
 <div class="bg-red-600 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -181,4 +190,8 @@
         </div>
     </div>
 </div>
+<<<<<<< HEAD
 @endsection
+=======
+</x-app-layout-with-sidebar>
+>>>>>>> 847bd712ee5c51c00a5362abdefcc7e763f5e46a

@@ -242,10 +242,22 @@
                         @endif
                         
                         @if($inquiry->canBeDeleted() && (isset($userType) && ($userType === 'public' || $userType === 'mcmc')))
+<<<<<<< HEAD
                             <a href="{{ route('inquiries.delete', $inquiry->I_ID) }}" 
                                class="w-full inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                                 <i class="fas fa-trash mr-2"></i>Delete Inquiry
                             </a>
+=======
+                            <form method="POST" action="{{ route('inquiries.destroy', $inquiry->I_ID) }}" 
+                                  onsubmit="return confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" 
+                                        class="w-full inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                                    <i class="fas fa-trash mr-2"></i>Delete Inquiry
+                                </button>
+                            </form>
+>>>>>>> 847bd712ee5c51c00a5362abdefcc7e763f5e46a
                         @endif
                     </div>
                 </div>
