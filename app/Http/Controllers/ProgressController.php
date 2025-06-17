@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -16,33 +17,33 @@ class ProgressController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required',
-            'description' => 'required|string',
-            'updated_date' => 'required|date',
+            'P_Status' => 'required',
+            'P_Description' => 'required|string',
+            'P_Date' => 'required|date',
         ]);
 
-        $inquiry = Inquiry::findOrFail($id);
-
         $progress = new Progress();
-        $progress->inquiry_id = $id;
-        $progress->status = $request->status;
-        $progress->description = $request->description;
-        $progress->updated_date = $request->updated_date;
+        $progress->I_ID = $id;
+        $progress->P_Status = $request->P_Status;
+        $progress->P_Description = $request->P_Description;
+        $progress->P_Date = $request->P_Date;
         $progress->save();
 
-        $inquiry->status = $request->status;
+        // Optional: Update Inquiry status
+        $inquiry = Inquiry::findOrFail($id);
+        $inquiry->I_Status = $request->P_Status;
         $inquiry->save();
 
         return redirect()->route('inquiry.progress.edit', $id)
                          ->with('success', 'Progress updated successfully.');
     }
 
-public function view(Request $request, $inquiry_id)
-{
-    $progressRecords = Progress::where('inquiry_id', $inquiry_id)
-                        ->orderBy('created_at', 'desc')
-                        ->get();
+    public function view(Request $request, $id)
+    {
+        $progressRecords = Progress::where('I_ID', $id)
+                            ->orderByDesc('P_Date')
+                            ->get();
 
-    return view('ManageProgress.ViewInquiryProgress', compact('progressRecords'));
+        return view('ManageProgress.ViewInquiryProgress', compact('progressRecords'));
+    }
 }
-
