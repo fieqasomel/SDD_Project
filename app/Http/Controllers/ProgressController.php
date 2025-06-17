@@ -73,4 +73,31 @@ class ProgressController extends Controller
 
         return view('ManageProgress.SearchByStatus', compact('inquiries', 'status'));
     }
+    public function showFeedbackForm()
+    {
+    $inquiries = Inquiry::all();
+    return view('ManageProgress.ProvideFeedback', compact('inquiries'));
+    }
+
+    public function submitFeedback(Request $request)
+    {
+    $request->validate([
+        'inquiry_id' => 'required|exists:inquiry,I_ID',
+        'p_title' => 'required|string|max:255',
+        'p_description' => 'required|string',
+    ]);
+
+    Progress::create([
+        'P_ID' => 'P' . uniqid(),
+        'I_ID' => $request->inquiry_id,
+        'C_ID' => null,
+        'P_Title' => $request->p_title,
+        'P_Description' => $request->p_description,
+        'P_Date' => now(),
+        'P_Status' => 'In Progress',
+    ]);
+
+    return redirect()->back()->with('success', 'Feedback successfully submitted.');
+    }
+
 }
