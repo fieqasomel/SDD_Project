@@ -99,5 +99,25 @@ class ProgressController extends Controller
 
     return redirect()->back()->with('success', 'Feedback successfully submitted.');
     }
+    public function viewNotifications()
+    {
+    // Join progress with inquiries and complaints for meaningful notifications
+    $notifications = Progress::select(
+            'progress.P_Date',
+            'progress.P_Status',
+            'progress.P_Title',
+            'progress.P_Description',
+            'inquiry.I_ID',
+            'inquiry.I_Title',
+            'complaint.A_ID'
+        )
+        ->join('inquiry', 'progress.I_ID', '=', 'inquiry.I_ID')
+        ->join('complaint', 'progress.C_ID', '=', 'complaint.C_ID')
+        ->orderBy('progress.P_Date', 'desc')
+        ->get();
+
+    return view('Notification.InquiryNotification', compact('notifications'));
+    }
+
 
 }
