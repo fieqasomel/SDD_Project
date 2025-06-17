@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
 use App\Models\Report;
 use App\Models\Agency;
 use App\Models\Complaint;
 use App\Models\Inquiry;
+use App\Models\PublicUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -194,7 +194,7 @@ class ReportController extends Controller
         return null;
     }
 }
-=======
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -576,5 +576,46 @@ class MCMCInquiryController extends Controller
             logger('Failed to log activity: ' . $e->getMessage());
         }
     }
+
+    public function generateProgressReport(Request $request)
+{
+    $startDate = $request->start_date;
+    $endDate = $request->end_date;
+    $status = $request->status;
+
+    // Get filtered inquiries
+    $query = Inquiry::with(['publicUser', 'complaint.agency']);
+
+    if ($startDate && $endDate) {
+        $query->whereBetween('I_Date', [$startDate, $endDate]);
+    }
+
+    if ($status && $status !== 'All') {
+        $query->where('I_Status', $status);
+    }
+
+    $inquiries = $query->get();
+
+    // Group by agency and calculate summary
+    $summary = $inquiries->groupBy(function ($inquiry) {
+        return optional($inquiry->complaint->agency)->A_Name ?? 'Unassigned';
+    })->map(function ($group) {
+        $resolvedCount = $group->where('I_Status', 'Resolved')->count();
+        $pendingCount = $group->where('I_Status', 'Pending')->count();
+        $avgResolutionDays = $group->filter(fn($inq) => $inq->I_Status === 'Resolved')->avg(function ($inq) {
+            $firstProgress = $inq->progress->sortBy('P_Date')->first();
+            return $firstProgress ? $inq->I_Date->diffInDays($firstProgress->P_Date) : null;
+        });
+
+        return [
+            'total' => $group->count(),
+            'resolved' => $resolvedCount,
+            'pending' => $pendingCount,
+            'avg_days' => round($avgResolutionDays, 2),
+        ];
+    });
+
+    return view('ManageProgress.GenerateProgressReport', compact('inquiries', 'summary', 'startDate', 'endDate', 'status'));
 }
->>>>>>> 847bd712ee5c51c00a5362abdefcc7e763f5e46a
+}
+
