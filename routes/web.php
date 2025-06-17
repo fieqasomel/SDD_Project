@@ -129,6 +129,7 @@ Route::middleware(['auth:mcmc'])->group(function () {
 
 Route::get('/agency/feedback', [ProgressController::class, 'showFeedbackForm'])->name('feedback.form');
 Route::post('/agency/feedback/submit', [ProgressController::class, 'submitFeedback'])->name('submit.feedback');
+Route::get('/mcmc/alerts', [ProgressController::class, 'viewMcmcAlerts'])->name('mcmc.alerts');
 
 // Jetstream auth dashboard
 Route::middleware([
