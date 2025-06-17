@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Progress;
 use App\Models\Inquiry;
 
@@ -48,17 +49,28 @@ class ProgressController extends Controller
     }
 
     public function searchInquiriesByStatus(Request $request)
-{
-    $status = $request->input('status', 'All');
+    {
+        $status = $request->input('status');
 
-    $query = Inquiry::query();
+        // Check user type
+        if (Auth::guard('publicuser')->check()) {
+            $user = Auth::guard('publicuser')->user();
 
-    if ($status !== 'All') {
-        $query->where('I_Status', $status);
+            // Public User: only see their own inquiries
+            $query = Inquiry::where('public_user_id', $user->id);
+        } elseif (Auth::guard('mcmc')->check()) {
+            // MCMC: can view all inquiries
+            $query = Inquiry::query();
+        } else {
+            abort(403, 'Unauthorized');
+        }
+
+        if ($status && $status !== 'All') {
+            $query->where('status', $status);
+        }
+
+        $inquiries = $query->orderBy('created_at', 'desc')->get();
+
+        return view('ManageProgress.SearchByStatus', compact('inquiries', 'status'));
     }
-
-    $inquiries = $query->orderBy('I_Date', 'desc')->get();
-
-    return view('ManageProgress.SearchByStatus', compact('inquiries', 'status'));
-}
 }
