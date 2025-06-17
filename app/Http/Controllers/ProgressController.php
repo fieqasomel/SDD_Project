@@ -118,6 +118,4 @@ class ProgressController extends Controller
 
     return view('Notification.InquiryNotification', compact('notifications'));
     }
-
-
 }
