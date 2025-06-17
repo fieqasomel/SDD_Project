@@ -122,6 +122,10 @@ Route::middleware(['auth:publicuser,mcmc'])->group(function () {
     Route::get('/inquiries/search-by-status', [\App\Http\Controllers\ProgressController::class, 'searchInquiriesByStatus'])->name('inquiries.search.status');
 });
 
+Route::middleware(['auth:mcmc'])->group(function () {
+    Route::get('/report/progress', [\App\Http\Controllers\ReportController::class, 'generateProgressReport'])->name('report.progress');
+});
+
 // Jetstream auth dashboard
 Route::middleware([
     'auth:sanctum',
