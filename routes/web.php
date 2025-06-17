@@ -7,6 +7,7 @@ use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\MCMCController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\ComplaintController;
+use App\Http\Controllers\ProgressController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -125,6 +126,9 @@ Route::middleware(['auth:publicuser,mcmc'])->group(function () {
 Route::middleware(['auth:mcmc'])->group(function () {
     Route::get('/report/progress', [\App\Http\Controllers\ReportController::class, 'generateProgressReport'])->name('report.progress');
 });
+
+Route::get('/agency/feedback', [ProgressController::class, 'showFeedbackForm'])->name('feedback.form');
+Route::post('/agency/feedback/submit', [ProgressController::class, 'submitFeedback'])->name('submit.feedback');
 
 // Jetstream auth dashboard
 Route::middleware([
