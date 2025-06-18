@@ -207,7 +207,7 @@
                                                 {{ $inquiry->I_Status }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Date ? $inquiry->I_Date->format('Y-m-d') : 'N/A' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Date ? \Carbon\Carbon::parse($inquiry->I_Date)->format('Y-m-d') : 'N/A' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->publicUser ? $inquiry->publicUser->PU_Name : 'N/A' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Source ?? 'N/A' }}</td>
                                     </tr>
@@ -314,7 +314,7 @@
                                 <td style="border: 1px solid #000; padding: 8px;">{{ Str::limit($inquiry->I_Title, 30) }}</td>
                                 <td style="border: 1px solid #000; padding: 8px;">{{ $inquiry->I_Category }}</td>
                                 <td style="border: 1px solid #000; padding: 8px;">{{ $inquiry->I_Status }}</td>
-                                <td style="border: 1px solid #000; padding: 8px;">{{ $inquiry->I_Date ? $inquiry->I_Date->format('d/m/Y') : 'N/A' }}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">{{ $inquiry->I_Date ? \Carbon\Carbon::parse($inquiry->I_Date)->format('d/m/Y') : 'N/A' }}</td>
                             </tr>
                             @endforeach
                         </tbody>

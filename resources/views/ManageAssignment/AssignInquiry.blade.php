@@ -22,7 +22,7 @@
                         <p><strong>Title:</strong> {{ $inquiry->I_Title }}</p>
                         <p><strong>Category:</strong> <span class="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">{{ $inquiry->I_Category }}</span></p>
                         <p><strong>Status:</strong> <span class="px-2 py-1 text-xs font-semibold rounded bg-{{ $inquiry->getStatusBadgeColor() === 'success' ? 'green' : ($inquiry->getStatusBadgeColor() === 'danger' ? 'red' : 'yellow') }}-500 text-white">{{ $inquiry->I_Status }}</span></p>
-                        <p><strong>Date:</strong> {{ $inquiry->I_Date->format('d M Y') }}</p>
+                        <p><strong>Date:</strong> {{ $inquiry->I_Date ? \Carbon\Carbon::parse($inquiry->I_Date)->format('d M Y') : 'N/A' }}</p>
                     </div>
                     <div>
                         <p><strong>Submitted by:</strong> {{ $inquiry->publicUser->PU_Name ?? 'N/A' }}</p>

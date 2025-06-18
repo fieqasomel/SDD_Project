@@ -249,8 +249,8 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="flex flex-col">
-                                                    <div class="text-sm text-gray-900">{{ $inquiry->I_Date ? $inquiry->I_Date->format('d/m/Y') : 'N/A' }}</div>
-                                                    <div class="text-xs text-gray-500">{{ $inquiry->I_Date ? $inquiry->I_Date->diffForHumans() : '' }}</div>
+                                                    <div class="text-sm text-gray-900">{{ $inquiry->I_Date ? \Carbon\Carbon::parse($inquiry->I_Date)->format('d/m/Y') : 'N/A' }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $inquiry->I_Date ? \Carbon\Carbon::parse($inquiry->I_Date)->diffForHumans() : '' }}</div>
                                                 </div>
                                             </td>
                                             @if($userType !== 'public')

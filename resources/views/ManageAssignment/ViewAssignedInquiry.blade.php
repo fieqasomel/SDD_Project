@@ -31,7 +31,7 @@
                     <p><strong>Title:</strong> {{ $complaint->inquiry->I_Title }}</p>
                     <p><strong>Category:</strong> <span class="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{{ $complaint->inquiry->I_Category }}</span></p>
                     <p><strong>Status:</strong> <span class="inline-block bg-{{ $complaint->inquiry->getStatusBadgeColor() }}-100 text-{{ $complaint->inquiry->getStatusBadgeColor() }}-800 px-2 py-0.5 rounded">{{ $complaint->inquiry->I_Status }}</span></p>
-                    <p><strong>Submitted Date:</strong> {{ $complaint->inquiry->I_Date->format('d M Y') }}</p>
+                    <p><strong>Submitted Date:</strong> {{ $complaint->inquiry->I_Date ? \Carbon\Carbon::parse($complaint->inquiry->I_Date)->format('d M Y') : 'N/A' }}</p>
                     <p><strong>Source:</strong> {{ $complaint->inquiry->I_Source ?? 'N/A' }}</p>
                 </div>
                 <div class="mt-4">

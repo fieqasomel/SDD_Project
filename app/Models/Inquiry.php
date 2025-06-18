@@ -9,6 +9,12 @@ class Inquiry extends Model
 {
     use HasFactory;
 
+    // Status constants
+    const STATUS_PENDING = 'pending';
+    const STATUS_IN_PROGRESS = 'in_progress';
+    const STATUS_RESOLVED = 'resolved';
+    const STATUS_CLOSED = 'closed';
+
     protected $table = 'inquiry';
     protected $primaryKey = 'I_ID';
     public $incrementing = false;
@@ -28,127 +34,89 @@ class Inquiry extends Model
         'InfoPath'
     ];
 
-    protected $casts = [
-        'I_Date' => 'date',
-    ];
-
-    // Define inquiry statuses
-    const STATUS_PENDING = 'Pending';
-    const STATUS_IN_PROGRESS = 'In Progress';
-    const STATUS_RESOLVED = 'Resolved';
-    const STATUS_CLOSED = 'Closed';
-    const STATUS_REJECTED = 'Rejected';
-
-    // Define inquiry categories
-    const CATEGORIES = [
-        'General Information',
-        'Technical Support',
-        'Billing',
-        'Service Request',
-        'Complaint',
-        'Other'
-    ];
-
     // Relationship with PublicUser
     public function publicUser()
     {
         return $this->belongsTo(PublicUser::class, 'PU_ID', 'PU_ID');
     }
 
-    // Relationship with Progress (if inquiry has progress tracking)
-    public function progress()
+    // Relationship with Complaint
+    public function complaints()
     {
-        return $this->hasMany(Progress::class, 'I_ID', 'I_ID');
+        return $this->hasMany(Complaint::class, 'I_ID', 'I_ID');
     }
 
-    // Relationship with Complaint (assignment tracking)
-    public function complaint()
+    // Helper methods for status checking
+    public function isPending()
     {
-        return $this->hasOne(Complaint::class, 'I_ID', 'I_ID');
+        return $this->I_Status === self::STATUS_PENDING;
     }
 
-    // Check if inquiry is assigned
-    public function isAssigned()
+    public function isInProgress()
     {
-        return $this->complaint()->exists();
+        return $this->I_Status === self::STATUS_IN_PROGRESS;
     }
 
-    // Get assigned agency
-    public function getAssignedAgency()
+    public function isResolved()
     {
-        return $this->complaint ? $this->complaint->agency : null;
+        return $this->I_Status === self::STATUS_RESOLVED;
     }
 
-    // Scope for filtering by status
-    public function scopeByStatus($query, $status)
+    public function isClosed()
     {
-        return $query->where('I_Status', $status);
+        return $this->I_Status === self::STATUS_CLOSED;
     }
 
-    // Scope for filtering by category
-    public function scopeByCategory($query, $category)
+    // Get all available statuses
+    public static function getStatuses()
     {
-        return $query->where('I_Category', $category);
+        return [
+            self::STATUS_PENDING => 'Pending',
+            self::STATUS_IN_PROGRESS => 'In Progress',
+            self::STATUS_RESOLVED => 'Resolved',
+            self::STATUS_CLOSED => 'Closed',
+        ];
     }
 
-    // Scope for filtering by date range
-    public function scopeByDateRange($query, $startDate, $endDate)
+    // Get status label
+    public function getStatusLabelAttribute()
     {
-        return $query->whereBetween('I_Date', [$startDate, $endDate]);
-    }
-
-    // Scope for searching by title or description
-    public function scopeSearch($query, $search)
-    {
-        return $query->where(function($q) use ($search) {
-            $q->where('I_Title', 'like', "%{$search}%")
-              ->orWhere('I_Description', 'like', "%{$search}%");
-        });
-    }
-
-    // Generate unique inquiry ID
-    public static function generateInquiryId()
-    {
-        $lastInquiry = self::orderBy('I_ID', 'desc')->first();
-        
-        if (!$lastInquiry) {
-            return 'INQ0001';
-        }
-        
-        $lastNumber = intval(substr($lastInquiry->I_ID, 3));
-        $newNumber = $lastNumber + 1;
-        
-        return 'INQ' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-    }
-
-    // Get status badge color for UI
-    public function getStatusBadgeColor()
-    {
-        switch ($this->I_Status) {
-            case self::STATUS_PENDING:
-                return 'warning';
-            case self::STATUS_IN_PROGRESS:
-                return 'info';
-            case self::STATUS_RESOLVED:
-                return 'success';
-            case self::STATUS_CLOSED:
-                return 'secondary';
-            case self::STATUS_REJECTED:
-                return 'danger';
-            default:
-                return 'light';
-        }
+        return self::getStatuses()[$this->I_Status] ?? $this->I_Status;
     }
 
     // Check if inquiry can be edited
     public function canBeEdited()
     {
-        return in_array($this->I_Status, [self::STATUS_PENDING, self::STATUS_IN_PROGRESS]);
+        // Inquiry can be edited if status is Pending or In Progress
+        return in_array($this->I_Status, [
+            self::STATUS_PENDING,
+            self::STATUS_IN_PROGRESS,
+            'Pending',
+            'In Progress'
+        ]);
     }
 
-    // Check if inquiry can be deleted
-    public function canBeDeleted()
+    // Get status badge color for styling
+    public function getStatusBadgeColor()
     {
-        return $this->I_Status === self::STATUS_PENDING;
+        switch (strtolower($this->I_Status)) {
+            case 'pending':
+            case self::STATUS_PENDING:
+                return 'warning'; // yellow
+            case 'in progress':
+            case 'in_progress':
+            case self::STATUS_IN_PROGRESS:
+                return 'info'; // blue
+            case 'resolved':
+            case self::STATUS_RESOLVED:
+                return 'success'; // green
+            case 'closed':
+            case self::STATUS_CLOSED:
+                return 'secondary'; // gray
+            case 'rejected':
+                return 'danger'; // red
+            default:
+                return 'secondary'; // gray
+        }
     }
 }

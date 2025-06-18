@@ -52,7 +52,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Date Submitted</label>
-                            <p class="text-gray-900 bg-gray-50 p-3 rounded-lg">{{ $inquiry->I_Date ? $inquiry->I_Date->format('d/m/Y') : 'N/A' }}</p>
+                            <p class="text-gray-900 bg-gray-50 p-3 rounded-lg">{{ $inquiry->I_Date ? \Carbon\Carbon::parse($inquiry->I_Date)->format('d/m/Y') : 'N/A' }}</p>
                         </div>
                         <div class="md:col-span-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>

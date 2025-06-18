@@ -85,7 +85,7 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 mb-3">View Inquiries</h3>
                 <p class="text-gray-600 mb-6 leading-relaxed">View and manage all inquiries assigned to your agency</p>
-                <a href="#" class="btn-success inline-block">View Inquiries</a>
+                <a href="{{ route('inquiries.index') }}" class="btn-success inline-block">View Inquiries</a>
             </div>
         </div>
 
@@ -121,7 +121,7 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 mb-3">Search Inquiries</h3>
                 <p class="text-gray-600 mb-6 leading-relaxed">Search and filter inquiries by various criteria</p>
-                <a href="#" class="btn-success inline-block">Search</a>
+                <a href="{{ route('inquiries.search') }}" class="btn-success inline-block">Search</a>
             </div>
         </div>
 
@@ -131,9 +131,9 @@
                 <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                     <i class="fas fa-chart-bar text-white text-2xl"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">Generate Reports</h3>
-                <p class="text-gray-600 mb-6 leading-relaxed">Generate performance and activity reports</p>
-                <a href="#" class="btn-success inline-block">Generate Reports</a>
+                <h3 class="text-xl font-bold text-gray-800 mb-3">Agency Reports</h3>
+                <p class="text-gray-600 mb-6 leading-relaxed">View assigned inquiries and generate activity reports</p>
+                <a href="{{ route('inquiries.report') }}" class="btn-success inline-block">View Reports</a>
             </div>
         </div>
 

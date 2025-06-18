@@ -2,356 +2,388 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Inquiry;
-use App\Models\PublicUser;
-use App\Models\Agency;
-use App\Models\MCMC;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use App\Models\Inquiry;
 
 class InquiryController extends Controller
 {
     /**
-     * Display the main inquiry management dashboard
+     * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        // Build query based on user permissions
-        $query = Inquiry::with(['publicUser', 'complaint']);
-        
-        // Apply user-specific filters
-        if ($userType === 'public') {
-            $query->where('PU_ID', $user->PU_ID);
-        } elseif ($userType === 'agency') {
-            // Agency can see inquiries related to their category
-            $query->where('I_Category', $user->A_Category);
+        try {
+            // Initialize query
+            $query = Inquiry::query();
+            
+            // If user is authenticated, filter by user
+            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                $query->where('PU_ID', Auth::user()->PU_ID);
+            } else {
+                // If not authenticated or not a public user, return empty
+                return view('ManageInquiry.ManageInquiries', [
+                    'inquiries' => collect([]),
+                    'stats' => [
+                        'total' => 0,
+                        'pending' => 0,
+                        'in_progress' => 0,
+                        'resolved' => 0,
+                        'closed' => 0
+                    ]
+                ]);
+            }
+
+            // Apply search filters
+            if ($request->filled('search')) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('I_ID', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Title', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Description', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Category', 'like', "%{$searchTerm}%");
+                });
+            }
+            
+            if ($request->filled('category') && $request->category !== '') {
+                $query->where('I_Category', $request->category);
+            }
+            
+            if ($request->filled('status') && $request->status !== '') {
+                $query->where('I_Status', $request->status);
+            }
+
+            // Get inquiries
+            $inquiries = $query->orderBy('I_Date', 'desc')->get();
+            
+            // Calculate statistics (for all user's inquiries, not just filtered)
+            $allInquiries = Inquiry::where('PU_ID', Auth::user()->PU_ID)->get();
+            $stats = [
+                'total' => $allInquiries->count(),
+                'pending' => $allInquiries->where('I_Status', 'Pending')->count(),
+                'in_progress' => $allInquiries->where('I_Status', 'In Progress')->count(),
+                'resolved' => $allInquiries->where('I_Status', 'Resolved')->count(),
+                'closed' => $allInquiries->where('I_Status', 'Closed')->count()
+            ];
+            
+            return view('ManageInquiry.ManageInquiries', [
+                'inquiries' => $inquiries,
+                'stats' => $stats
+            ]);
+            
+        } catch (\Exception $e) {
+            // Fallback in case of any errors
+            \Log::error('Error in index: ' . $e->getMessage());
+            return view('ManageInquiry.ManageInquiries', [
+                'inquiries' => collect([]),
+                'stats' => [
+                    'total' => 0,
+                    'pending' => 0,
+                    'in_progress' => 0,
+                    'resolved' => 0,
+                    'closed' => 0
+                ]
+            ]);
         }
-        // MCMC users can see all inquiries
-        
-        // Apply search filters
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
-        
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
-        }
-        
-        if ($request->filled('category')) {
-            $query->byCategory($request->category);
-        }
-        
-        if ($request->filled('date_from') && $request->filled('date_to')) {
-            $query->byDateRange($request->date_from, $request->date_to);
-        }
-        
-        // Get inquiries with pagination
-        $inquiries = $query->orderBy('I_Date', 'desc')->paginate(10);
-        
-        // Get statistics for dashboard
-        $stats = $this->getInquiryStats($userType, $user);
-        
-        return view('ManageInquiry.manageInquiries', compact('inquiries', 'stats', 'userType'));
     }
 
     /**
-     * Show the form for creating a new inquiry
+     * Show the form for creating a new resource.
      */
     public function create()
     {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
+        // Categories for the dropdown
+        $categories = [
+            'General Information',
+            'Technical Support',
+            'Billing',
+            'Complaint',
+            'Service Request',
+            'Feedback',
+            'Other'
+        ];
         
-        // Only public users can create inquiries
-        if ($userType !== 'public') {
-            return redirect()->route('inquiries.index')->with('error', 'Only public users can create inquiries.');
-        }
-        
-        return view('ManageInquiry.create', [
-            'categories' => Inquiry::CATEGORIES
-        ]);
+        return view('ManageInquiry.SubmitInquiry', compact('categories'));
     }
 
     /**
-     * Store a newly created inquiry
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
+        \Log::info('Store method called', ['request_data' => $request->all()]);
         
-        if ($userType !== 'public') {
-            return redirect()->route('inquiries.index')->with('error', 'Only public users can create inquiries.');
-        }
-        
-        $request->validate([
+        // Validate the request
+        $validatedData = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string|in:' . implode(',', Inquiry::CATEGORIES),
+            'category' => 'required|string',
+            'description' => 'required|string|max:1000',
             'source' => 'nullable|string|max:255',
-            'attachment' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048'
+            'attachment' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048', // 2MB max
         ]);
-        
-        $inquiryId = Inquiry::generateInquiryId();
-        
-        $inquiryData = [
-            'I_ID' => $inquiryId,
-            'PU_ID' => $user->PU_ID,
-            'I_Title' => $request->title,
-            'I_Description' => $request->description,
-            'I_Category' => $request->category,
-            'I_Date' => Carbon::now()->toDateString(),
-            'I_Status' => Inquiry::STATUS_PENDING,
-            'I_Source' => $request->source
-        ];
-        
-        // Handle file upload
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $filename = $inquiryId . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('inquiries', $filename, 'public');
+
+        \Log::info('Validation passed', ['validated_data' => $validatedData]);
+
+        try {
+            // Handle file upload if present
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $file = $request->file('attachment');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $attachmentPath = $file->storeAs('inquiries', $fileName, 'public');
+            }
+
+            // Generate unique inquiry ID
+            do {
+                $inquiryId = 'INQ' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            } while (Inquiry::where('I_ID', $inquiryId)->exists());
+
+            // Save to database
+            $inquiry = new Inquiry();
+            $inquiry->I_ID = $inquiryId;
+            $inquiry->I_Title = $validatedData['title'];
+            $inquiry->I_Category = $validatedData['category'];
+            $inquiry->I_Description = $validatedData['description'];
+            $inquiry->I_Source = $validatedData['source'] ?? null;
+            $inquiry->I_filename = $attachmentPath;
+            $inquiry->I_Date = now()->toDateString();
+            $inquiry->I_Status = 'Pending';
             
-            $inquiryData['I_filename'] = $filename;
-            $inquiryData['InfoPath'] = $path;
-        }
-        
-        Inquiry::create($inquiryData);
-        
-        return redirect()->route('inquiries.index')->with('success', 'Inquiry submitted successfully!');
-    }
-
-    /**
-     * Display the specified inquiry
-     */
-    public function show($id)
-    {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        $inquiry = Inquiry::with(['publicUser', 'progress'])->findOrFail($id);
-        
-        // Check permissions
-        if (!$this->canViewInquiry($inquiry, $user, $userType)) {
-            return redirect()->route('inquiries.index')->with('error', 'You do not have permission to view this inquiry.');
-        }
-        
-        return view('ManageInquiry.show', compact('inquiry', 'userType'));
-    }
-
-    /**
-     * Show the form for editing the specified inquiry
-     */
-    public function edit($id)
-    {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        $inquiry = Inquiry::findOrFail($id);
-        
-        // Check permissions
-        if (!$this->canEditInquiry($inquiry, $user, $userType)) {
-            return redirect()->route('inquiries.index')->with('error', 'You do not have permission to edit this inquiry.');
-        }
-        
-        return view('ManageInquiry.edit', [
-            'inquiry' => $inquiry,
-            'categories' => Inquiry::CATEGORIES,
-            'statuses' => $this->getAvailableStatuses($userType)
-        ]);
-    }
-
-    /**
-     * Update the specified inquiry
-     */
-    public function update(Request $request, $id)
-    {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        $inquiry = Inquiry::findOrFail($id);
-        
-        if (!$this->canEditInquiry($inquiry, $user, $userType)) {
-            return redirect()->route('inquiries.index')->with('error', 'You do not have permission to edit this inquiry.');
-        }
-        
-        $rules = [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string|in:' . implode(',', Inquiry::CATEGORIES),
-            'source' => 'nullable|string|max:255',
-            'attachment' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048'
-        ];
-        
-        // Add status validation for admin users
-        if ($userType !== 'public') {
-            $availableStatuses = $this->getAvailableStatuses($userType);
-            $rules['status'] = 'required|string|in:' . implode(',', $availableStatuses);
-        }
-        
-        $request->validate($rules);
-        
-        $updateData = [
-            'I_Title' => $request->title,
-            'I_Description' => $request->description,
-            'I_Category' => $request->category,
-            'I_Source' => $request->source
-        ];
-        
-        // Update status if user has permission
-        if ($userType !== 'public' && $request->filled('status')) {
-            $updateData['I_Status'] = $request->status;
-        }
-        
-        // Handle file upload
-        if ($request->hasFile('attachment')) {
-            // Delete old file if exists
-            if ($inquiry->InfoPath) {
-                Storage::disk('public')->delete($inquiry->InfoPath);
+            // Get the correct PU_ID from authenticated user
+            if (Auth::user() instanceof \App\Models\PublicUser) {
+                $inquiry->PU_ID = Auth::user()->PU_ID;
+            } else {
+                $inquiry->PU_ID = null; // Or handle other user types
             }
             
-            $file = $request->file('attachment');
-            $filename = $inquiry->I_ID . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('inquiries', $filename, 'public');
+            $inquiry->save();
             
-            $updateData['I_filename'] = $filename;
-            $updateData['InfoPath'] = $path;
+            // Log the successful save for debugging
+            \Log::info('Inquiry saved successfully', [
+                'inquiry_id' => $inquiryId,
+                'user_id' => Auth::user()->PU_ID ?? 'N/A',
+                'title' => $validatedData['title']
+            ]);
+
+            return redirect()->route('inquiries.index')->with('success', 'Inquiry submitted successfully! Your inquiry ID is ' . $inquiryId . '. You will receive updates on its status.');
+            
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Inquiry submission error: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->withErrors(['error' => 'There was an error submitting your inquiry. Please try again.'])
+                ->withInput();
         }
-        
-        $inquiry->update($updateData);
-        
-        return redirect()->route('inquiries.show', $id)->with('success', 'Inquiry updated successfully!');
     }
 
     /**
-     * Show the delete confirmation form
+     * Display the specified resource.
      */
-    public function delete($id)
+    public function show(string $id)
     {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        $inquiry = Inquiry::with('publicUser')->findOrFail($id);
-        
-        if (!$this->canDeleteInquiry($inquiry, $user, $userType)) {
-            return redirect()->route('inquiries.index')->with('error', 'You do not have permission to delete this inquiry.');
+        try {
+            // Find the inquiry by ID
+            $inquiry = Inquiry::where('I_ID', $id)->first();
+            
+            // Check if inquiry exists
+            if (!$inquiry) {
+                return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
+            }
+            
+            // Check if user owns this inquiry (for security)
+            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
+                    return redirect()->route('inquiries.index')->with('error', 'You are not authorized to view this inquiry.');
+                }
+            }
+            
+            return view('ManageInquiry.ViewInquiryDetails', compact('inquiry'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error viewing inquiry: ' . $e->getMessage());
+            return redirect()->route('inquiries.index')->with('error', 'Error viewing inquiry.');
         }
-        
-        return view('ManageInquiry.DeleteInquiry', compact('inquiry', 'userType'));
     }
 
     /**
-     * Remove the specified inquiry
+     * Show the form for editing the specified resource.
      */
-    public function destroy(Request $request, $id)
+    public function edit(string $id)
     {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        $inquiry = Inquiry::findOrFail($id);
-        
-        if (!$this->canDeleteInquiry($inquiry, $user, $userType)) {
-            return redirect()->route('inquiries.index')->with('error', 'You do not have permission to delete this inquiry.');
+        try {
+            \Log::info('Edit inquiry requested for ID: ' . $id);
+            
+            // Find the inquiry by ID
+            $inquiry = Inquiry::where('I_ID', $id)->first();
+            \Log::info('Inquiry found: ' . ($inquiry ? 'Yes' : 'No'));
+            
+            // Check if inquiry exists
+            if (!$inquiry) {
+                \Log::error('Inquiry not found with ID: ' . $id);
+                return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
+            }
+            
+            \Log::info('Inquiry details: ID=' . $inquiry->I_ID . ', Status=' . $inquiry->I_Status . ', PU_ID=' . $inquiry->PU_ID);
+            
+            // Check if user owns this inquiry (for security)
+            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                \Log::info('User authenticated: ' . Auth::user()->PU_ID);
+                if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
+                    \Log::error('User not authorized. Inquiry PU_ID: ' . $inquiry->PU_ID . ', User PU_ID: ' . Auth::user()->PU_ID);
+                    return redirect()->route('inquiries.index')->with('error', 'You are not authorized to edit this inquiry.');
+                }
+            } else {
+                \Log::error('User not authenticated or not a PublicUser');
+                return redirect()->route('inquiries.index')->with('error', 'Authentication required.');
+            }
+            
+            // Check if inquiry can be edited (only pending inquiries can be edited)
+            if ($inquiry->I_Status !== 'Pending') {
+                \Log::error('Inquiry cannot be edited. Status: ' . $inquiry->I_Status);
+                return redirect()->route('inquiries.index')->with('error', 'Only pending inquiries can be edited.');
+            }
+            
+            // Categories for the dropdown
+            $categories = [
+                'General Information',
+                'Technical Support',
+                'Billing',
+                'Complaint',
+                'Service Request',
+                'Feedback',
+                'Other'
+            ];
+            
+            return view('ManageInquiry.EditInquiry', compact('inquiry', 'categories'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error editing inquiry: ' . $e->getMessage());
+            return redirect()->route('inquiries.index')->with('error', 'Error editing inquiry.');
         }
-
-        // Validate deletion reason and confirmation
-        $request->validate([
-            'deletion_reason' => 'required|string|max:255',
-            'additional_comments' => 'required_if:deletion_reason,Other|nullable|string|max:1000',
-            'optional_comments' => 'nullable|string|max:1000',
-            'confirm_deletion' => 'required|accepted'
-        ], [
-            'deletion_reason.required' => 'Please select a reason for deletion.',
-            'additional_comments.required_if' => 'Please provide additional details when selecting "Other" as the reason.',
-            'confirm_deletion.required' => 'You must confirm the deletion.',
-            'confirm_deletion.accepted' => 'You must confirm the deletion by checking the checkbox.'
-        ]);
-
-        // Prepare deletion log data
-        $deletionReason = $request->deletion_reason;
-        if ($request->deletion_reason === 'Other' && $request->filled('additional_comments')) {
-            $deletionReason = 'Other: ' . $request->additional_comments;
-        } elseif ($request->filled('optional_comments')) {
-            $deletionReason = $request->deletion_reason . ' - ' . $request->optional_comments;
-        }
-
-        // Log the deletion for audit trail
-        $deletionLog = [
-            'inquiry_id' => $inquiry->I_ID,
-            'inquiry_title' => $inquiry->I_Title,
-            'inquiry_category' => $inquiry->I_Category,
-            'inquiry_status' => $inquiry->I_Status,
-            'submitted_by' => $inquiry->publicUser ? $inquiry->publicUser->PU_Name : 'N/A',
-            'submitted_by_email' => $inquiry->publicUser ? $inquiry->publicUser->PU_Email : 'N/A',
-            'deleted_by' => $this->getDeletedByName($user, $userType),
-            'deleted_by_type' => $userType,
-            'deletion_reason' => $deletionReason,
-            'deleted_at' => now(),
-            'inquiry_date' => $inquiry->I_Date
-        ];
-
-        // Store deletion log in a separate table or log file
-        $this->logInquiryDeletion($deletionLog);
-        
-        // Delete associated file if exists
-        if ($inquiry->InfoPath) {
-            Storage::disk('public')->delete($inquiry->InfoPath);
-        }
-        
-        $inquiry->delete();
-        
-        return redirect()->route('inquiries.index')->with('success', 'Inquiry deleted successfully! Deletion reason has been logged for audit purposes.');
     }
 
     /**
-     * Show inquiry history for the authenticated user
+     * Update the specified resource in storage.
      */
-    public function history(Request $request)
+    public function update(Request $request, string $id)
     {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        // Build query based on user permissions
-        $query = Inquiry::with(['publicUser', 'progress', 'complaint.agency']);
-        
-        // Apply user-specific filters
-        if ($userType === 'public') {
-            $query->where('PU_ID', $user->PU_ID);
-        } elseif ($userType === 'agency') {
-            // Agency can see inquiries related to their category
-            $query->where('I_Category', $user->A_Category);
+        try {
+            // Find the inquiry by ID
+            $inquiry = Inquiry::where('I_ID', $id)->first();
+            
+            // Check if inquiry exists
+            if (!$inquiry) {
+                return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
+            }
+            
+            // Check if user owns this inquiry (for security)
+            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
+                    return redirect()->route('inquiries.index')->with('error', 'You are not authorized to update this inquiry.');
+                }
+            }
+            
+            // Check if inquiry can be updated (only pending inquiries can be updated)
+            if ($inquiry->I_Status !== 'Pending') {
+                return redirect()->route('inquiries.index')->with('error', 'Only pending inquiries can be updated.');
+            }
+            
+            // Validate the request
+            $validatedData = $request->validate([
+                'title' => 'required|string|max:255',
+                'category' => 'required|string',
+                'description' => 'required|string|max:1000',
+                'source' => 'nullable|string|max:255',
+                'attachment' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
+            ]);
+            
+            // Handle file upload if present
+            $attachmentPath = $inquiry->I_filename; // Keep existing attachment by default
+            if ($request->hasFile('attachment')) {
+                // Delete old file if exists
+                if ($inquiry->I_filename && \Storage::disk('public')->exists($inquiry->I_filename)) {
+                    \Storage::disk('public')->delete($inquiry->I_filename);
+                }
+                
+                // Upload new file
+                $file = $request->file('attachment');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $attachmentPath = $file->storeAs('inquiries', $fileName, 'public');
+            }
+            
+            // Update the inquiry
+            $inquiry->I_Title = $validatedData['title'];
+            $inquiry->I_Category = $validatedData['category'];
+            $inquiry->I_Description = $validatedData['description'];
+            $inquiry->I_Source = $validatedData['source'] ?? null;
+            $inquiry->I_filename = $attachmentPath;
+            $inquiry->save();
+            
+            \Log::info('Inquiry updated successfully', [
+                'inquiry_id' => $id,
+                'user_id' => Auth::user()->PU_ID ?? 'N/A'
+            ]);
+            
+            return redirect()->route('inquiries.index')->with('success', 'Inquiry updated successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error updating inquiry: ' . $e->getMessage());
+            return redirect()->back()
+                ->withErrors(['error' => 'There was an error updating your inquiry. Please try again.'])
+                ->withInput();
         }
-        // MCMC users can see all inquiries
+    }
 
-        // Apply search filters from request
-        if ($request->filled('search')) {
-            $query->search($request->search);
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        try {
+            // Find the inquiry by ID
+            $inquiry = Inquiry::where('I_ID', $id)->first();
+            
+            // Check if inquiry exists
+            if (!$inquiry) {
+                return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
+            }
+            
+            // Check if user owns this inquiry (for security)
+            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
+                    return redirect()->route('inquiries.index')->with('error', 'You are not authorized to delete this inquiry.');
+                }
+            }
+            
+            // Check if inquiry can be deleted (only pending inquiries can be deleted)
+            if ($inquiry->I_Status !== 'Pending') {
+                return redirect()->route('inquiries.index')->with('error', 'Only pending inquiries can be deleted.');
+            }
+            
+            // Delete attachment file if exists
+            if ($inquiry->I_filename && \Storage::disk('public')->exists($inquiry->I_filename)) {
+                \Storage::disk('public')->delete($inquiry->I_filename);
+            }
+            
+            // Delete the inquiry
+            $inquiryTitle = $inquiry->I_Title;
+            $inquiry->delete();
+            
+            \Log::info('Inquiry deleted successfully', [
+                'inquiry_id' => $id,
+                'inquiry_title' => $inquiryTitle,
+                'user_id' => Auth::user()->PU_ID ?? 'N/A'
+            ]);
+            
+            return redirect()->route('inquiries.index')->with('success', 'Inquiry "' . $inquiryTitle . '" deleted successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error deleting inquiry: ' . $e->getMessage());
+            return redirect()->route('inquiries.index')->with('error', 'Error deleting inquiry.');
         }
-        
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
-        }
-        
-        if ($request->filled('category')) {
-            $query->byCategory($request->category);
-        }
-        
-        if ($request->filled('date_from') && $request->filled('date_to')) {
-            $query->byDateRange($request->date_from, $request->date_to);
-        }
-        
-        // Order by date (newest first) and paginate
-        $inquiries = $query->orderBy('I_Date', 'desc')->paginate(10);
-        
-        // Get statistics for the current user
-        $stats = $this->getInquiryHistoryStats($userType, $user);
-        
-        return view('ManageInquiry.InquiryHistoryView', compact('inquiries', 'stats', 'userType'));
     }
 
     /**
@@ -359,38 +391,55 @@ class InquiryController extends Controller
      */
     public function search(Request $request)
     {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        $query = Inquiry::with('publicUser');
-        
-        // Apply user-specific filters
-        if ($userType === 'public') {
-            $query->where('PU_ID', $user->PU_ID);
-        } elseif ($userType === 'agency') {
-            $query->where('I_Category', $user->A_Category);
+        try {
+            $userType = $this->getUserType();
+            $query = Inquiry::with('publicUser');
+            
+            // Apply search filters
+            if ($request->filled('search')) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('I_ID', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Title', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Description', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Category', 'like', "%{$searchTerm}%");
+                });
+            }
+            
+            if ($request->filled('category') && $request->category !== '') {
+                $query->where('I_Category', $request->category);
+            }
+            
+            if ($request->filled('status') && $request->status !== '') {
+                $query->where('I_Status', $request->status);
+            }
+
+            // Apply date filters
+            if ($request->filled('date_from')) {
+                $query->where('I_Date', '>=', $request->date_from);
+            }
+            
+            if ($request->filled('date_to')) {
+                $query->where('I_Date', '<=', $request->date_to);
+            }
+            
+            // Apply user-specific filters
+            if ($userType === 'public') {
+                $query->where('PU_ID', Auth::user()->PU_ID);
+            }
+            
+            $inquiries = $query->orderBy('I_Date', 'desc')->paginate(15);
+            
+            // Categories and statuses for filter dropdowns
+            $categories = ['General Information', 'Technical Support', 'Billing', 'Complaint', 'Service Request', 'Feedback', 'Other'];
+            $statuses = ['Pending', 'In Progress', 'Resolved', 'Closed', 'Rejected'];
+            
+            return view('ManageInquiry.SearchInquiry', compact('inquiries', 'categories', 'statuses', 'userType'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in search: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Search failed. Please try again.');
         }
-        
-        // Apply search filters
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
-        
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
-        }
-        
-        if ($request->filled('category')) {
-            $query->byCategory($request->category);
-        }
-        
-        if ($request->filled('date_from') && $request->filled('date_to')) {
-            $query->byDateRange($request->date_from, $request->date_to);
-        }
-        
-        $inquiries = $query->orderBy('I_Date', 'desc')->paginate(10);
-        
-        return view('ManageInquiry.search', compact('inquiries', 'userType'));
     }
 
     /**
@@ -398,246 +447,159 @@ class InquiryController extends Controller
      */
     public function generateReport(Request $request)
     {
-        $user = Auth::user();
-        $userType = $this->getUserType($user);
-        
-        // Only MCMC and Agency users can generate reports
-        if ($userType === 'public') {
-            return redirect()->route('inquiries.index')->with('error', 'You do not have permission to generate reports.');
+        try {
+            $userType = $this->getUserType();
+            $query = Inquiry::with(['publicUser', 'complaints.agency']);
+            
+            // Apply user-specific filters
+            if ($userType === 'agency') {
+                // Agencies only see inquiries assigned to them
+                $agencyId = Auth::user()->A_ID;
+                $query->whereHas('complaints', function($q) use ($agencyId) {
+                    $q->where('A_ID', $agencyId);
+                });
+            } elseif ($userType === 'public') {
+                // Public users only see their own inquiries
+                $query->where('PU_ID', Auth::user()->PU_ID);
+            }
+            // MCMC users see all inquiries (no additional filter)
+            
+            // Apply date filters
+            if ($request->filled('date_from')) {
+                $query->where('I_Date', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->where('I_Date', '<=', $request->date_to);
+            }
+            
+            // Apply other filters  
+            if ($request->filled('category') && $request->category !== '') {
+                $query->where('I_Category', $request->category);
+            }
+            
+            if ($request->filled('status') && $request->status !== '') {
+                $query->where('I_Status', $request->status);
+            }
+            
+            $inquiries = $query->orderBy('I_Date', 'desc')->get();
+            
+            // Categories and statuses for filter dropdowns
+            $categories = ['General Information', 'Technical Support', 'Billing', 'Complaint', 'Service Request', 'Feedback', 'Other'];
+            $statuses = ['Pending', 'In Progress', 'Resolved', 'Closed', 'Rejected'];
+            
+            return view('ManageInquiry.GenerateInquiryReport', compact('inquiries', 'categories', 'statuses', 'userType'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in generateReport: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Report generation failed. Please try again.');
         }
-        
-        $query = Inquiry::with('publicUser');
-        
-        // Apply user-specific filters
-        if ($userType === 'agency') {
-            $query->where('I_Category', $user->A_Category);
-        }
-        
-        // Apply date range filter
-        if ($request->filled('date_from') && $request->filled('date_to')) {
-            $query->byDateRange($request->date_from, $request->date_to);
-        } else {
-            // Default to current month
-            $query->byDateRange(Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth());
-        }
-        
-        $inquiries = $query->orderBy('I_Date', 'desc')->get();
-        
-        // Generate statistics
-        $stats = [
-            'total' => $inquiries->count(),
-            'pending' => $inquiries->where('I_Status', Inquiry::STATUS_PENDING)->count(),
-            'in_progress' => $inquiries->where('I_Status', Inquiry::STATUS_IN_PROGRESS)->count(),
-            'resolved' => $inquiries->where('I_Status', Inquiry::STATUS_RESOLVED)->count(),
-            'closed' => $inquiries->where('I_Status', Inquiry::STATUS_CLOSED)->count(),
-            'rejected' => $inquiries->where('I_Status', Inquiry::STATUS_REJECTED)->count(),
-        ];
-        
-        $categoryStats = $inquiries->groupBy('I_Category')->map->count();
-        
-        return view('ManageInquiry.report', compact('inquiries', 'stats', 'categoryStats', 'userType'));
     }
 
     /**
-     * Get user type based on authenticated user
+     * Show public inquiries history (for transparency)
      */
-    private function getUserType($user)
+    public function inquiryHistory(Request $request)
     {
-        if ($user instanceof PublicUser) {
+        try {
+            $userType = $this->getUserType();
+            
+            // Get all inquiries with public information only (privacy protected)
+            $inquiries = Inquiry::with(['publicUser:PU_ID,PU_Name'])
+                ->orderBy('I_Date', 'desc')
+                ->paginate(20);
+            
+            // Categories for filtering
+            $categories = [
+                'General Information',
+                'Technical Support', 
+                'Billing',
+                'Complaint',
+                'Service Request',
+                'Feedback',
+                'Other'
+            ];
+            
+            // Status options for filtering
+            $statuses = ['Pending', 'In Progress', 'Resolved', 'Closed', 'Rejected'];
+            
+            return view('ManageInquiry.InquiryHistoryView', compact('inquiries', 'categories', 'statuses', 'userType'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in inquiryHistory: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Unable to load inquiry history. Please try again.');
+        }
+    }
+
+    /**
+     * Display public inquiries (accessible by all users but with privacy protection)
+     */
+    public function publicInquiries(Request $request)
+    {
+        try {
+            $userType = $this->getUserType();
+            
+            // Build query for all inquiries (regardless of user) but select only public-safe fields
+            $query = Inquiry::select([
+                'I_ID', 'I_Title', 'I_Category', 'I_Description', 
+                'I_Status', 'I_Date', 'PU_ID'
+            ]);
+            
+            // Apply search filters
+            if ($request->filled('search')) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('I_ID', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Title', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Description', 'like', "%{$searchTerm}%")
+                      ->orWhere('I_Category', 'like', "%{$searchTerm}%");
+                });
+            }
+            
+            if ($request->filled('category') && $request->category !== '') {
+                $query->where('I_Category', $request->category);
+            }
+            
+            if ($request->filled('status') && $request->status !== '') {
+                $query->where('I_Status', $request->status);
+            }
+
+            // Apply date filters
+            if ($request->filled('date_from')) {
+                $query->where('I_Date', '>=', $request->date_from);
+            }
+            
+            if ($request->filled('date_to')) {
+                $query->where('I_Date', '<=', $request->date_to);
+            }
+            
+            // Get inquiries with pagination
+            $inquiries = $query->orderBy('I_Date', 'desc')->paginate(15);
+            
+            // Categories and statuses for filter dropdowns
+            $categories = ['General Information', 'Technical Support', 'Billing', 'Complaint', 'Service Request', 'Feedback', 'Other'];
+            $statuses = ['Pending', 'In Progress', 'Resolved', 'Closed', 'Rejected'];
+            
+            return view('ManageInquiry.PublicInquiries', compact('inquiries', 'categories', 'statuses', 'userType'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in publicInquiries: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Unable to load public inquiries. Please try again.');
+        }
+    }
+
+    /**
+     * Get the type of the authenticated user
+     */
+    private function getUserType()
+    {
+        if (Auth::guard('publicuser')->check()) {
             return 'public';
-        } elseif ($user instanceof Agency) {
+        } elseif (Auth::guard('agency')->check()) {
             return 'agency';
-        } elseif ($user instanceof MCMC) {
+        } elseif (Auth::guard('mcmc')->check()) {
             return 'mcmc';
         }
         
         return 'unknown';
-    }
-
-    /**
-     * Get inquiry history statistics
-     */
-    private function getInquiryHistoryStats($userType, $user)
-    {
-        $baseQuery = Inquiry::query();
-        
-        if ($userType === 'public') {
-            $baseQuery->where('PU_ID', $user->PU_ID);
-        } elseif ($userType === 'agency') {
-            $baseQuery->where('I_Category', $user->A_Category);
-        }
-        
-        return [
-            'total' => (clone $baseQuery)->count(),
-            'pending' => (clone $baseQuery)->byStatus(Inquiry::STATUS_PENDING)->count(),
-            'under_review' => (clone $baseQuery)->byStatus(Inquiry::STATUS_UNDER_REVIEW)->count(),
-            'validated' => (clone $baseQuery)->byStatus(Inquiry::STATUS_VALIDATED)->count(),
-            'assigned' => (clone $baseQuery)->byStatus(Inquiry::STATUS_ASSIGNED)->count(),
-            'in_progress' => (clone $baseQuery)->byStatus(Inquiry::STATUS_IN_PROGRESS)->count(),
-            'resolved' => (clone $baseQuery)->byStatus(Inquiry::STATUS_RESOLVED)->count(),
-            'closed' => (clone $baseQuery)->byStatus(Inquiry::STATUS_CLOSED)->count(),
-            'rejected' => (clone $baseQuery)->byStatus(Inquiry::STATUS_REJECTED)->count(),
-            'non_serious' => (clone $baseQuery)->byStatus(Inquiry::STATUS_NON_SERIOUS)->count(),
-        ];
-    }
-
-    /**
-     * Get inquiry statistics for dashboard
-     */
-    private function getInquiryStats($userType, $user)
-    {
-        $query = Inquiry::query();
-        
-        if ($userType === 'public') {
-            $query->where('PU_ID', $user->PU_ID);
-        } elseif ($userType === 'agency') {
-            $query->where('I_Category', $user->A_Category);
-        }
-        
-        $stats = [
-            'total' => $query->count(),
-            'pending' => $query->byStatus(Inquiry::STATUS_PENDING)->count(),
-            'in_progress' => $query->byStatus(Inquiry::STATUS_IN_PROGRESS)->count(),
-            'resolved' => $query->byStatus(Inquiry::STATUS_RESOLVED)->count(),
-            'closed' => $query->byStatus(Inquiry::STATUS_CLOSED)->count(),
-        ];
-        
-        // Add the statistics needed for the MCMC dashboard
-        $stats['pending_inquiries'] = $stats['pending'];
-        $stats['in_progress_inquiries'] = $stats['in_progress'];
-        $stats['resolved_inquiries'] = $stats['resolved'];
-        
-        // Get inquiries from the current month
-        $startOfMonth = Carbon::now()->startOfMonth();
-        $endOfMonth = Carbon::now()->endOfMonth();
-        $stats['this_month_inquiries'] = Inquiry::whereBetween('I_Date', [$startOfMonth, $endOfMonth])->count();
-        
-        return $stats;
-    }
-
-    /**
-     * Check if user can view inquiry
-     */
-    private function canViewInquiry($inquiry, $user, $userType)
-    {
-        if ($userType === 'public') {
-            return $inquiry->PU_ID === $user->PU_ID;
-        } elseif ($userType === 'agency') {
-            return $inquiry->I_Category === $user->A_Category;
-        } elseif ($userType === 'mcmc') {
-            return true; // MCMC can view all inquiries
-        }
-        
-        return false;
-    }
-
-    /**
-     * Check if user can edit inquiry
-     */
-    private function canEditInquiry($inquiry, $user, $userType)
-    {
-        if (!$inquiry->canBeEdited()) {
-            return false;
-        }
-        
-        if ($userType === 'public') {
-            return $inquiry->PU_ID === $user->PU_ID;
-        } elseif ($userType === 'agency') {
-            return $inquiry->I_Category === $user->A_Category;
-        } elseif ($userType === 'mcmc') {
-            return true; // MCMC can edit all inquiries
-        }
-        
-        return false;
-    }
-
-    /**
-     * Check if user can delete inquiry
-     */
-    private function canDeleteInquiry($inquiry, $user, $userType)
-    {
-        if (!$inquiry->canBeDeleted()) {
-            return false;
-        }
-        
-        if ($userType === 'public') {
-            return $inquiry->PU_ID === $user->PU_ID;
-        } elseif ($userType === 'mcmc') {
-            return true; // Only MCMC can delete inquiries in any state
-        }
-        
-        return false;
-    }
-
-    /**
-     * Get available statuses based on user type
-     */
-    private function getAvailableStatuses($userType)
-    {
-        if ($userType === 'public') {
-            return [Inquiry::STATUS_PENDING]; // Public users can only set to pending
-        } elseif ($userType === 'agency') {
-            return [
-                Inquiry::STATUS_IN_PROGRESS,
-                Inquiry::STATUS_RESOLVED,
-                Inquiry::STATUS_CLOSED
-            ];
-        } elseif ($userType === 'mcmc') {
-            return [
-                Inquiry::STATUS_PENDING,
-                Inquiry::STATUS_IN_PROGRESS,
-                Inquiry::STATUS_RESOLVED,
-                Inquiry::STATUS_CLOSED,
-                Inquiry::STATUS_REJECTED
-            ];
-        }
-        
-        return [];
-    }
-
-    /**
-     * Get the name of the user who deleted the inquiry
-     */
-    private function getDeletedByName($user, $userType)
-    {
-        switch ($userType) {
-            case 'public':
-                return $user->PU_Name ?? 'Public User';
-            case 'agency':
-                return $user->A_Name ?? 'Agency User';
-            case 'mcmc':
-                return $user->M_Name ?? 'MCMC User';
-            default:
-                return 'Unknown User';
-        }
-    }
-
-    /**
-     * Log inquiry deletion for audit purposes
-     */
-    private function logInquiryDeletion($deletionLog)
-    {
-        // Log to Laravel's default log file
-        \Log::info('Inquiry Deletion', $deletionLog);
-
-        // Optionally, you can also store in a database table
-        // This would require creating a deletion_logs table first
-        /*
-        DB::table('inquiry_deletion_logs')->insert([
-            'inquiry_id' => $deletionLog['inquiry_id'],
-            'inquiry_title' => $deletionLog['inquiry_title'],
-            'inquiry_category' => $deletionLog['inquiry_category'],
-            'inquiry_status' => $deletionLog['inquiry_status'],
-            'submitted_by' => $deletionLog['submitted_by'],
-            'submitted_by_email' => $deletionLog['submitted_by_email'],
-            'deleted_by' => $deletionLog['deleted_by'],
-            'deleted_by_type' => $deletionLog['deleted_by_type'],
-            'deletion_reason' => $deletionLog['deletion_reason'],
-            'deleted_at' => $deletionLog['deleted_at'],
-            'inquiry_date' => $deletionLog['inquiry_date'],
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
-        */
     }
 }

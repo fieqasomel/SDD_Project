@@ -19,10 +19,10 @@
                     <div class="mt-4">
                         <h4>Quick Links</h4>
                         <div class="list-group mt-3">
-                            <a href="{{ route('inquiries.index') }}" class="list-group-item list-group-item-action">
+                            <a href="{{ route('publicuser.inquiries') }}" class="list-group-item list-group-item-action">
                                 <i class="fas fa-question-circle mr-2"></i> View My Inquiries
                             </a>
-                            <a href="{{ route('inquiries.create') }}" class="list-group-item list-group-item-action">
+                            <a href="{{ route('publicuser.inquiries.create') }}" class="list-group-item list-group-item-action">
                                 <i class="fas fa-plus-circle mr-2"></i> Submit New Inquiry
                             </a>
                             <a href="{{ route('assignments.index') }}" class="list-group-item list-group-item-action">

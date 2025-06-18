@@ -5,12 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SDD System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .user-type-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .user-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .user-type-card.active {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+        }
+        .user-type-card.active.agency {
+            border-color: #10b981 !important;
+            background-color: #f0fdf4 !important;
+        }
+        .user-type-card.active.mcmc {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+        }
+        .hidden { display: none !important; }
+        .btn-login {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border: none;
+            padding: 16px 24px;
+            border-radius: 9999px;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .btn-login:active {
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 flex items-center justify-center p-4">
-    <div class="w-full max-w-4xl mx-auto" x-data="{ selectedUserType: '{{ old('user_type', 'public_user') }}' }" x-init="console.log('Alpine initialized with user type:', selectedUserType)">
+    <div class="w-full max-w-4xl mx-auto">
         <div class="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm bg-opacity-95">
             <!-- Header Section -->
             <div class="bg-gradient-to-r from-blue-600 to-purple-700 text-white px-8 py-8 text-center relative overflow-hidden">
@@ -47,34 +87,31 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login') }}">
+                <form method="POST" action="{{ route('login') }}" id="loginForm">
                     @csrf
                     
                     <!-- User Type Selection -->
                     <div class="mb-8">
                         <label class="block text-sm font-bold text-gray-700 mb-4">Select User Type</label>
                         <div class="grid md:grid-cols-3 gap-4">
-                            <div class="user-type-card border-2 rounded-xl p-4 text-center cursor-pointer transition-all duration-300 hover:shadow-lg"
-                                 :class="selectedUserType === 'public_user' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'"
-                                 @click="selectedUserType = 'public_user'">
+                            <div class="user-type-card public_user border-2 border-gray-200 rounded-xl p-4 text-center active"
+                                 onclick="selectUserType('public_user')">
                                 <div class="text-3xl text-blue-600 mb-3">
                                     <i class="fas fa-user"></i>
                                 </div>
                                 <h6 class="font-semibold text-gray-800 mb-1">Public User</h6>
                                 <small class="text-gray-600">General Users</small>
                             </div>
-                            <div class="user-type-card border-2 rounded-xl p-4 text-center cursor-pointer transition-all duration-300 hover:shadow-lg"
-                                 :class="selectedUserType === 'agency' ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-green-300'"
-                                 @click="selectedUserType = 'agency'">
+                            <div class="user-type-card agency border-2 border-gray-200 rounded-xl p-4 text-center"
+                                 onclick="selectUserType('agency')">
                                 <div class="text-3xl text-green-600 mb-3">
                                     <i class="fas fa-building"></i>
                                 </div>
                                 <h6 class="font-semibold text-gray-800 mb-1">Agency</h6>
                                 <small class="text-gray-600">Government Agencies</small>
                             </div>
-                            <div class="user-type-card border-2 rounded-xl p-4 text-center cursor-pointer transition-all duration-300 hover:shadow-lg"
-                                 :class="selectedUserType === 'mcmc' ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-red-300'"
-                                 @click="selectedUserType = 'mcmc'">
+                            <div class="user-type-card mcmc border-2 border-gray-200 rounded-xl p-4 text-center"
+                                 onclick="selectUserType('mcmc')">
                                 <div class="text-3xl text-red-600 mb-3">
                                     <i class="fas fa-shield-alt"></i>
                                 </div>
@@ -82,11 +119,11 @@
                                 <small class="text-gray-600">MCMC Staff</small>
                             </div>
                         </div>
-                        <input type="hidden" name="user_type" :value="selectedUserType">
+                        <input type="hidden" name="user_type" id="user_type" value="public_user">
                     </div>
 
-                    <!-- Email/Username field that changes based on user type -->
-                    <div class="mb-6" x-show="selectedUserType === 'public_user'" x-transition>
+                    <!-- Email field for Public User -->
+                    <div class="mb-6" id="email-field">
                         <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-envelope mr-2 text-gray-500"></i>Email Address
                         </label>
@@ -95,12 +132,11 @@
                                id="email" 
                                name="email" 
                                value="{{ old('email') }}" 
-                               placeholder="Enter your email address"
-                               x-bind:required="selectedUserType === 'public_user'">
+                               placeholder="Enter your email address">
                     </div>
                     
                     <!-- Username field for Agency and MCMC -->
-                    <div class="mb-6" x-show="selectedUserType === 'agency' || selectedUserType === 'mcmc'" x-transition>
+                    <div class="mb-6 hidden" id="username-field">
                         <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-user mr-2 text-gray-500"></i>Username
                         </label>
@@ -109,8 +145,7 @@
                                id="username" 
                                name="username" 
                                value="{{ old('username') }}" 
-                               placeholder="Enter your username"
-                               x-bind:required="selectedUserType === 'agency' || selectedUserType === 'mcmc'">
+                               placeholder="Enter your username">
                     </div>
 
                     <!-- Password -->
@@ -128,7 +163,7 @@
 
                     <!-- Login Button -->
                     <div class="mb-6">
-                        <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-4 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-lg">
+                        <button type="submit" class="btn-login" id="loginButton">
                             <i class="fas fa-sign-in-alt mr-3"></i>Login to Account
                         </button>
                     </div>
@@ -153,69 +188,68 @@
         </div>
     </div>
 
-    <!-- Fallback JavaScript for user type functionality -->
+    <!-- Simple JavaScript -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const userTypeInput = document.querySelector('input[name="user_type"]');
-            const emailField = document.querySelector('#email').closest('div');
-            const usernameField = document.querySelector('#username').closest('div');
-            const userTypeCards = document.querySelectorAll('.user-type-card');
+        let selectedUserType = 'public_user';
+        
+        function selectUserType(userType) {
+            console.log('Selecting user type:', userType);
             
-            let selectedUserType = userTypeInput.value || 'public_user';
+            selectedUserType = userType;
+            document.getElementById('user_type').value = userType;
             
-            function updateFields(userType) {
-                // Update hidden input
-                userTypeInput.value = userType;
-                
-                // Show/hide appropriate fields
-                if (userType === 'public_user') {
-                    emailField.style.display = 'block';
-                    usernameField.style.display = 'none';
-                    document.querySelector('#email').required = true;
-                    document.querySelector('#username').required = false;
-                } else {
-                    emailField.style.display = 'none';
-                    usernameField.style.display = 'block';
-                    document.querySelector('#email').required = false;
-                    document.querySelector('#username').required = true;
-                }
-                
-                // Update card styling
-                userTypeCards.forEach(card => {
-                    card.classList.remove('border-blue-500', 'bg-blue-50', 'border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50');
-                    card.classList.add('border-gray-200');
-                });
-                
-                // Add active styling to selected card
-                const selectedCard = Array.from(userTypeCards).find(card => {
-                    const cardText = card.querySelector('h6').textContent.toLowerCase().replace(' ', '_');
-                    return cardText === userType;
-                });
-                
-                if (selectedCard) {
-                    selectedCard.classList.remove('border-gray-200');
-                    if (userType === 'public_user') {
-                        selectedCard.classList.add('border-blue-500', 'bg-blue-50');
-                    } else if (userType === 'agency') {
-                        selectedCard.classList.add('border-green-500', 'bg-green-50');
-                    } else if (userType === 'mcmc') {
-                        selectedCard.classList.add('border-red-500', 'bg-red-50');
-                    }
-                }
+            // Update card styling
+            const cards = document.querySelectorAll('.user-type-card');
+            cards.forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            const selectedCard = document.querySelector('.user-type-card.' + userType);
+            if (selectedCard) {
+                selectedCard.classList.add('active');
             }
             
-            // Initialize with default user type
-            updateFields(selectedUserType);
+            // Show/hide appropriate fields
+            const emailField = document.getElementById('email-field');
+            const usernameField = document.getElementById('username-field');
+            const emailInput = document.getElementById('email');
+            const usernameInput = document.getElementById('username');
             
-            // Add click handlers to user type cards
-            userTypeCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    const cardType = this.querySelector('h6').textContent.toLowerCase().replace(' ', '_');
-                    selectedUserType = cardType;
-                    updateFields(cardType);
-                });
+            if (userType === 'public_user') {
+                emailField.classList.remove('hidden');
+                usernameField.classList.add('hidden');
+                emailInput.required = true;
+                usernameInput.required = false;
+            } else {
+                emailField.classList.add('hidden');
+                usernameField.classList.remove('hidden');
+                emailInput.required = false;
+                usernameInput.required = true;
+            }
+            
+            console.log('User type selected:', userType);
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded');
+            selectUserType('public_user');
+            
+            // Test button click
+            document.getElementById('loginButton').addEventListener('click', function(e) {
+                console.log('Login button clicked!');
+                console.log('Selected user type:', selectedUserType);
+                console.log('Form data:', new FormData(document.getElementById('loginForm')));
             });
         });
+        
+        // Debug function - you can call this in browser console
+        window.debugLogin = function() {
+            console.log('Current user type:', selectedUserType);
+            console.log('Form element:', document.getElementById('loginForm'));
+            console.log('Button element:', document.getElementById('loginButton'));
+            console.log('All form data:', new FormData(document.getElementById('loginForm')));
+        };
     </script>
 </body>
 </html>

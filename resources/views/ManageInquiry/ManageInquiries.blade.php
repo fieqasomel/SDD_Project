@@ -1,24 +1,49 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Manage Inquiries') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
+
+@section('title', 'My Inquiries - MySebenarnya System')
+
+@section('content')
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Manage Inquiries</h1>
-                <p class="text-gray-600">Track and manage all inquiry submissions</p>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">My Inquiries</h1>
+                <p class="text-gray-600">View and manage your inquiry submissions</p>
             </div>
-            @if($userType === 'public')
-                <a href="{{ route('inquiries.create') }}" 
-                   class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 mt-4 sm:mt-0">
-                    <i class="fas fa-plus mr-2"></i>Submit New Inquiry
+            <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
+                <a href="{{ route('inquiries.public') }}" 
+                   class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-globe mr-2"></i>Public Inquiries
                 </a>
-            @endif
+                <a href="{{ route('inquiries.create') }}" 
+                   class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-plus mr-2"></i>New Inquiry
+                </a>
+            </div>
         </div>
+
+        <!-- Success Message -->
+        @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 relative">
+            <strong class="font-bold">Success!</strong>
+            <span class="block sm:inline">{{ session('success') }}</span>
+            <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                <svg class="fill-current h-6 w-6 text-green-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <title>Close</title>
+                    <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                </svg>
+            </span>
+        </div>
+        @endif
+
+        <!-- Error Message -->
+        @if(session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 relative">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline">{{ session('error') }}</span>
+        </div>
+        @endif
 
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -75,8 +100,8 @@
             </div>
         </div>
 
-        <!-- Search and Filter Section -->
-        <div class="bg-white rounded-2xl shadow-lg mb-8">
+        <!-- Search & Filter -->
+        <div class="bg-white rounded-2xl shadow-lg mb-6">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-900 flex items-center">
                     <i class="fas fa-search mr-2 text-blue-600"></i>Search & Filter
@@ -85,72 +110,125 @@
             <div class="p-6">
                 <form method="GET" action="{{ route('inquiries.index') }}" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Search Text -->
                         <div>
-                            <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
-                            <input type="text" id="search" name="search" 
-                                   value="{{ request('search') }}" 
-                                   placeholder="Search by title or description..."
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-search mr-1"></i>Search Text
+                            </label>
+                            <input type="text" 
+                                   id="search" 
+                                   name="search" 
+                                   value="{{ request('search') }}"
+                                   placeholder="Search by ID, title, category..."
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
                         </div>
+
+                        <!-- Category Filter -->
                         <div>
-                            <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                            <select id="status" name="status" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
-                                <option value="">All Statuses</option>
-                                <option value="Pending" {{ request('status') === 'Pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="In Progress" {{ request('status') === 'In Progress' ? 'selected' : '' }}>In Progress</option>
-                                <option value="Resolved" {{ request('status') === 'Resolved' ? 'selected' : '' }}>Resolved</option>
-                                <option value="Closed" {{ request('status') === 'Closed' ? 'selected' : '' }}>Closed</option>
-                                <option value="Rejected" {{ request('status') === 'Rejected' ? 'selected' : '' }}>Rejected</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="category" class="block text-sm font-semibold text-gray-700 mb-2">Category</label>
-                            <select id="category" name="category" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                            <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-tag mr-1"></i>Category
+                            </label>
+                            <select id="category" 
+                                    name="category"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
                                 <option value="">All Categories</option>
-                                @foreach(\App\Models\Inquiry::CATEGORIES as $category)
-                                    <option value="{{ $category }}" {{ request('category') === $category ? 'selected' : '' }}>
-                                        {{ $category }}
-                                    </option>
-                                @endforeach
+                                <option value="General Information" {{ request('category') == 'General Information' ? 'selected' : '' }}>General Information</option>
+                                <option value="Technical Support" {{ request('category') == 'Technical Support' ? 'selected' : '' }}>Technical Support</option>
+                                <option value="Billing" {{ request('category') == 'Billing' ? 'selected' : '' }}>Billing</option>
+                                <option value="Complaint" {{ request('category') == 'Complaint' ? 'selected' : '' }}>Complaint</option>
+                                <option value="Service Request" {{ request('category') == 'Service Request' ? 'selected' : '' }}>Service Request</option>
+                                <option value="Feedback" {{ request('category') == 'Feedback' ? 'selected' : '' }}>Feedback</option>
+                                <option value="Other" {{ request('category') == 'Other' ? 'selected' : '' }}>Other</option>
                             </select>
                         </div>
+
+                        <!-- Status Filter -->
                         <div>
-                            <label for="date_from" class="block text-sm font-semibold text-gray-700 mb-2">Date From</label>
-                            <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-flag mr-1"></i>Status
+                            </label>
+                            <select id="status" 
+                                    name="status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                <option value="">All Statuses</option>
+                                <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="In Progress" {{ request('status') == 'In Progress' ? 'selected' : '' }}>In Progress</option>
+                                <option value="Resolved" {{ request('status') == 'Resolved' ? 'selected' : '' }}>Resolved</option>
+                                <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }}>Closed</option>
+                                <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>Rejected</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="date_to" class="block text-sm font-semibold text-gray-700 mb-2">Date To</label>
-                            <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
-                        </div>
+
+                        <!-- Search Button -->
                         <div class="flex items-end">
-                            <button type="submit" 
-                                    class="w-full px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                                <i class="fas fa-search mr-2"></i>Search
-                            </button>
+                            <div class="flex gap-2 w-full">
+                                <button type="submit" 
+                                        class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 text-sm">
+                                    <i class="fas fa-search mr-1"></i>Search
+                                </button>
+                                <a href="{{ route('inquiries.index') }}" 
+                                   class="inline-flex items-center px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 text-sm"
+                                   title="Clear filters">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </form>
+                
+                <!-- Active Filters -->
+                @if(request()->hasAny(['search', 'category', 'status']))
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700">Active filters:</span>
+                            
+                            @if(request('search'))
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    Search: "{{ request('search') }}"
+                                    <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" class="ml-1 text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                            @endif
+                            
+                            @if(request('category'))
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Category: {{ request('category') }}
+                                    <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" class="ml-1 text-green-600 hover:text-green-800">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                            @endif
+                            
+                            @if(request('status'))
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    Status: {{ request('status') }}
+                                    <a href="{{ request()->fullUrlWithQuery(['status' => null]) }}" class="ml-1 text-yellow-600 hover:text-yellow-800">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </span>
+                            @endif
+                            
+                            <a href="{{ route('inquiries.index') }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200">
+                                <i class="fas fa-times mr-1"></i>Clear all
+                            </a>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
         <!-- Inquiries Table -->
         <div class="bg-white rounded-2xl shadow-lg">
-            <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-4 sm:mb-0">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
                     <i class="fas fa-list mr-2 text-blue-600"></i>Inquiries List
+                    @if(request()->hasAny(['search', 'category', 'status']))
+                        <span class="ml-2 text-sm text-gray-500">({{ $inquiries->count() }} found)</span>
+                    @else
+                        <span class="ml-2 text-sm text-gray-500">({{ $inquiries->count() }} total)</span>
+                    @endif
                 </h3>
-                @if($userType !== 'public')
-                    <a href="{{ route('inquiries.report') }}" 
-                       class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                        <i class="fas fa-chart-bar mr-2"></i>Generate Report
-                    </a>
-                @endif
             </div>
             <div class="p-6">
                 @if($inquiries->count() > 0)
@@ -163,9 +241,6 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    @if($userType !== 'public')
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
-                                    @endif
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -173,7 +248,7 @@
                                 @foreach($inquiries as $inquiry)
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $inquiry->I_ID }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-900">{{ Str::limit($inquiry->I_Title, 50) }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">{{ $inquiry->I_Title }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Category }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
@@ -190,47 +265,34 @@
                                                 {{ $inquiry->I_Status }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Date ? $inquiry->I_Date->format('Y-m-d') : 'N/A' }}</td>
-                                        @if($userType !== 'public')
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->publicUser ? $inquiry->publicUser->PU_Name : 'N/A' }}</td>
-                                        @endif
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Date ? date('Y-m-d', strtotime($inquiry->I_Date)) : 'N/A' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div class="flex space-x-2">
+                                            <div class="flex items-center space-x-2">
+                                                <!-- View Button -->
                                                 <a href="{{ route('inquiries.show', $inquiry->I_ID) }}" 
-                                                   class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                                                   title="View">
+                                                   class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
                                                     <i class="fas fa-eye mr-1"></i>View
                                                 </a>
                                                 
-                                                @if($userType === 'mcmc')
-                                                    @if(!$inquiry->isAssigned())
-                                                        <a href="{{ route('assignments.assign', $inquiry->I_ID) }}" 
-                                                           class="inline-flex items-center px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                                                           title="Assign to Agency">
-                                                            <i class="fas fa-user-plus mr-1"></i>Assign
-                                                        </a>
-                                                    @else
-                                                        <a href="{{ route('assignments.view', $inquiry->complaint->C_ID) }}" 
-                                                               class="inline-flex items-center px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                                                           title="View Assignment">
-                                                            <i class="fas fa-tasks mr-1"></i>Assignment
-                                                        </a>
-                                                    @endif
-                                                @endif
-                                                
-                                                @if($inquiry->canBeEdited())
+                                                @if($inquiry->I_Status === 'Pending')
+                                                    <!-- Edit Button -->
                                                     <a href="{{ route('inquiries.edit', $inquiry->I_ID) }}" 
-                                                       class="inline-flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                                                       title="Edit">
+                                                       class="inline-flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
                                                         <i class="fas fa-edit mr-1"></i>Edit
                                                     </a>
-                                                @endif
-                                                @if($inquiry->canBeDeleted() && ($userType === 'public' || $userType === 'mcmc'))
-                                                    <a href="{{ route('inquiries.delete', $inquiry->I_ID) }}" 
-                                                       class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                                                       title="Delete">
-                                                        <i class="fas fa-trash mr-1"></i>Delete
-                                                    </a>
+                                                    
+                                                    <!-- Delete Button -->
+                                                    <form method="POST" action="{{ route('inquiries.destroy', $inquiry->I_ID) }}" class="inline-block">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" 
+                                                                onclick="return confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')"
+                                                                class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                            <i class="fas fa-trash mr-1"></i>Delete
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <span class="text-xs text-gray-500 italic">Cannot edit/delete</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -240,27 +302,35 @@
                         </table>
                     </div>
                     
-                    <!-- Pagination -->
-                    <div class="mt-6 flex justify-center">
-                        {{ $inquiries->appends(request()->query())->links() }}
+                    <!-- Pagination - Only show if using paginator -->
+                    @if(method_exists($inquiries, 'links'))
+                    <div class="mt-6">
+                        {{ $inquiries->links() }}
                     </div>
+                    @endif
                 @else
                     <div class="text-center py-12">
-                        <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-inbox text-3xl text-gray-400"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No inquiries found</h3>
-                        <p class="text-gray-600 mb-4">
-                            @if($userType === 'public')
-                                You haven't submitted any inquiries yet.
+                        <div class="text-gray-400 mb-4">
+                            @if(request()->hasAny(['search', 'category', 'status']))
+                                <i class="fas fa-search text-5xl"></i>
                             @else
-                                No inquiries match your current filters.
+                                <i class="fas fa-inbox text-5xl"></i>
                             @endif
-                        </p>
-                        @if($userType === 'public')
+                        </div>
+                        
+                        @if(request()->hasAny(['search', 'category', 'status']))
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
+                            <p class="text-gray-600 mb-4">No inquiries match your search criteria. Try adjusting your filters.</p>
+                            <a href="{{ route('inquiries.index') }}" 
+                               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                                <i class="fas fa-times mr-2"></i>Clear Filters
+                            </a>
+                        @else
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">No Inquiries Found</h3>
+                            <p class="text-gray-600 mb-4">You don't have any inquiries yet. Start by creating your first inquiry!</p>
                             <a href="{{ route('inquiries.create') }}" 
-                               class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                                <i class="fas fa-plus mr-2"></i>Submit your first inquiry
+                               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                                <i class="fas fa-plus mr-2"></i>Create First Inquiry
                             </a>
                         @endif
                     </div>
@@ -270,30 +340,39 @@
     </div>
 </div>
 
-<!-- Success/Error Messages -->
-@if(session('success'))
-    <div class="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg" 
-         x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
-        <div class="flex items-center">
-            <i class="fas fa-check-circle mr-2"></i>
-            <span>{{ session('success') }}</span>
-            <button @click="show = false" class="ml-4 text-green-500 hover:text-green-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </div>
-@endif
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when dropdown filters change
+    const categorySelect = document.getElementById('category');
+    const statusSelect = document.getElementById('status');
+    
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
+    
+    // Auto-submit search after typing pause
+    const searchInput = document.getElementById('search');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.form.submit();
+            }, 1000); // Submit after 1 second of no typing
+        });
+    }
+});
+</script>
+@endpush
 
-@if(session('error'))
-    <div class="fixed top-4 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg" 
-         x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
-        <div class="flex items-center">
-            <i class="fas fa-exclamation-triangle mr-2"></i>
-            <span>{{ session('error') }}</span>
-            <button @click="show = false" class="ml-4 text-red-500 hover:text-red-700">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </div>
-@endif
-</x-app-layout>
+@endsection

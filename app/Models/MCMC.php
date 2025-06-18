@@ -48,18 +48,18 @@ class MCMC extends Authenticatable
     // Override the default username field
     public function getAuthIdentifierName()
     {
-        return 'M_Email';
+        return 'M_userName';
     }
 
     public function getAuthIdentifier()
     {
-        return $this->M_Email;
+        return $this->M_userName;
     }
 
     // Override the key name for sessions
     public function getKey()
     {
-        return $this->M_Email;
+        return $this->M_ID;
     }
 
     // Mutator to hash password
