@@ -588,6 +588,7 @@ class InquiryController extends Controller
     }
 
     /**
+<<<<<<< HEAD
      * MCMC Staff - View New Inquiries
      * Display newly submitted inquiries for MCMC staff review
      */
@@ -957,6 +958,8 @@ class InquiryController extends Controller
     }
 
     /**
+=======
+>>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
      * Get the type of the authenticated user
      */
     private function getUserType()

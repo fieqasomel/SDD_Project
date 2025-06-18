@@ -11,8 +11,11 @@ class Inquiry extends Model
 
     // Status constants
     const STATUS_PENDING = 'pending';
+<<<<<<< HEAD
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
+=======
+>>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
     const STATUS_IN_PROGRESS = 'in_progress';
     const STATUS_RESOLVED = 'resolved';
     const STATUS_CLOSED = 'closed';
@@ -33,11 +36,15 @@ class Inquiry extends Model
         'I_Status',
         'I_Source',
         'I_filename',
+<<<<<<< HEAD
         'InfoPath',
         'mcmc_notes',
         'mcmc_processed_by',
         'mcmc_processed_at',
         'rejection_reason'
+=======
+        'InfoPath'
+>>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
     ];
 
     // Relationship with PublicUser
@@ -52,6 +59,7 @@ class Inquiry extends Model
         return $this->hasMany(Complaint::class, 'I_ID', 'I_ID');
     }
 
+<<<<<<< HEAD
     // Relationship with MCMC (who processed the inquiry)
     public function mcmcProcessor()
     {
@@ -105,6 +113,43 @@ class Inquiry extends Model
     // Get status label
     public function getStatusLabelAttribute()
     {
+=======
+    // Helper methods for status checking
+    public function isPending()
+    {
+        return $this->I_Status === self::STATUS_PENDING;
+    }
+
+    public function isInProgress()
+    {
+        return $this->I_Status === self::STATUS_IN_PROGRESS;
+    }
+
+    public function isResolved()
+    {
+        return $this->I_Status === self::STATUS_RESOLVED;
+    }
+
+    public function isClosed()
+    {
+        return $this->I_Status === self::STATUS_CLOSED;
+    }
+
+    // Get all available statuses
+    public static function getStatuses()
+    {
+        return [
+            self::STATUS_PENDING => 'Pending',
+            self::STATUS_IN_PROGRESS => 'In Progress',
+            self::STATUS_RESOLVED => 'Resolved',
+            self::STATUS_CLOSED => 'Closed',
+        ];
+    }
+
+    // Get status label
+    public function getStatusLabelAttribute()
+    {
+>>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
         return self::getStatuses()[$this->I_Status] ?? $this->I_Status;
     }
 
@@ -127,12 +172,15 @@ class Inquiry extends Model
             case 'pending':
             case self::STATUS_PENDING:
                 return 'warning'; // yellow
+<<<<<<< HEAD
             case 'approved':
             case self::STATUS_APPROVED:
                 return 'primary'; // blue
             case 'rejected':
             case self::STATUS_REJECTED:
                 return 'danger'; // red
+=======
+>>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
             case 'in progress':
             case 'in_progress':
             case self::STATUS_IN_PROGRESS:
@@ -143,6 +191,11 @@ class Inquiry extends Model
             case 'closed':
             case self::STATUS_CLOSED:
                 return 'secondary'; // gray
+<<<<<<< HEAD
+=======
+            case 'rejected':
+                return 'danger'; // red
+>>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
             default:
                 return 'secondary'; // gray
         }

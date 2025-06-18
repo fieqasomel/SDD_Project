@@ -22,16 +22,20 @@
                     <span>Dashboard</span>
                 </a>
                 <a href="{{ route('inquiries.index') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
-                    <span>My Inquiries</span>
+                    <i class="fas fa-file-alt mr-2 group-hover:text-pink-300"></i>
+                    <span>Manage Inquiries</span>
                 </a>
                 <a href="{{ route('assignments.index') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
-                    <span>Assignments Management</span>
+                    <i class="fas fa-tasks mr-2 group-hover:text-pink-300"></i>
+                    <span>Assignments</span>
                 </a>
-                <a href="{{ route('assignments.index') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
-                    <span>Report</span>
+                <a href="{{ route('inquiries.search') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-search mr-2 group-hover:text-pink-300"></i>
+                    <span>Search & Filter</span>
+                </a>
+                <a href="{{ route('inquiries.report') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-chart-bar mr-2 group-hover:text-pink-300"></i>
+                    <span>Reports</span>
                 </a>
             </div>
         </nav>
@@ -65,4 +69,23 @@
             window.addEventListener('resize', checkScreenSize);
         }
     });
+<<<<<<< HEAD
+=======
+    
+    // Toggle user menu
+    function toggleUserMenu() {
+        const userMenu = document.getElementById('userMenu');
+        userMenu.classList.toggle('hidden');
+    }
+    
+    // Close user menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const userMenu = document.getElementById('userMenu');
+        const userButton = event.target.closest('button');
+        
+        if (!userButton || !userButton.onclick) {
+            userMenu.classList.add('hidden');
+        }
+    });
+>>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 </script>
