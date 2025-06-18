@@ -8,18 +8,34 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">My Inquiries</h1>
-                <p class="text-gray-600">View and manage your inquiry submissions</p>
+                @if(isset($isMCMC) && $isMCMC)
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">All Inquiries</h1>
+                    <p class="text-gray-600">View and manage all submitted inquiries from users</p>
+                @else
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">My Inquiries</h1>
+                    <p class="text-gray-600">View and manage your inquiry submissions</p>
+                @endif
             </div>
             <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
-                <a href="{{ route('inquiries.public') }}" 
-                   class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                    <i class="fas fa-globe mr-2"></i>Public Inquiries
-                </a>
-                <a href="{{ route('inquiries.create') }}" 
-                   class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                    <i class="fas fa-plus mr-2"></i>New Inquiry
-                </a>
+                @if(!isset($isMCMC) || !$isMCMC)
+                    <a href="{{ route('inquiries.public') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-globe mr-2"></i>Public Inquiries
+                    </a>
+                    <a href="{{ route('inquiries.create') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-plus mr-2"></i>New Inquiry
+                    </a>
+                @else
+                    <a href="{{ route('assignments.index') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-tasks mr-2"></i>Manage Assignments
+                    </a>
+                    <a href="{{ route('inquiries.report') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-chart-bar mr-2"></i>Generate Reports
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -238,6 +254,9 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                    @if(isset($isMCMC) && $isMCMC)
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
+                                    @endif
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
@@ -249,6 +268,18 @@
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $inquiry->I_ID }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ $inquiry->I_Title }}</td>
+                                        @if(isset($isMCMC) && $isMCMC)
+                                            <td class="px-6 py-4 text-sm text-gray-900">
+                                                @if($inquiry->publicUser)
+                                                    <div class="flex flex-col">
+                                                        <span class="font-medium text-gray-900">{{ $inquiry->publicUser->PU_Name }}</span>
+                                                        <span class="text-xs text-gray-500">{{ $inquiry->publicUser->PU_Email }}</span>
+                                                    </div>
+                                                @else
+                                                    <span class="text-gray-400 italic">User not found</span>
+                                                @endif
+                                            </td>
+                                        @endif
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Category }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
@@ -274,25 +305,42 @@
                                                     <i class="fas fa-eye mr-1"></i>View
                                                 </a>
                                                 
-                                                @if($inquiry->I_Status === 'Pending')
-                                                    <!-- Edit Button -->
-                                                    <a href="{{ route('inquiries.edit', $inquiry->I_ID) }}" 
-                                                       class="inline-flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
-                                                        <i class="fas fa-edit mr-1"></i>Edit
-                                                    </a>
-                                                    
-                                                    <!-- Delete Button -->
-                                                    <form method="POST" action="{{ route('inquiries.destroy', $inquiry->I_ID) }}" class="inline-block">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" 
-                                                                onclick="return confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')"
-                                                                class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
-                                                            <i class="fas fa-trash mr-1"></i>Delete
-                                                        </button>
-                                                    </form>
+                                                @if(isset($isMCMC) && $isMCMC)
+                                                    <!-- MCMC Management Actions -->
+                                                    @if($inquiry->I_Status === 'Pending')
+                                                        <a href="{{ route('assignments.assign', $inquiry->I_ID) }}" 
+                                                           class="inline-flex items-center px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                            <i class="fas fa-user-plus mr-1"></i>Assign
+                                                        </a>
+                                                    @endif
+                                                    @if(in_array($inquiry->I_Status, ['Pending', 'In Progress']))
+                                                        <a href="{{ route('inquiry.progress.edit', $inquiry->I_ID) }}" 
+                                                           class="inline-flex items-center px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                            <i class="fas fa-tasks mr-1"></i>Manage
+                                                        </a>
+                                                    @endif
                                                 @else
-                                                    <span class="text-xs text-gray-500 italic">Cannot edit/delete</span>
+                                                    <!-- Public User Actions -->
+                                                    @if($inquiry->I_Status === 'Pending')
+                                                        <!-- Edit Button -->
+                                                        <a href="{{ route('inquiries.edit', $inquiry->I_ID) }}" 
+                                                           class="inline-flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                            <i class="fas fa-edit mr-1"></i>Edit
+                                                        </a>
+                                                        
+                                                        <!-- Delete Button -->
+                                                        <form method="POST" action="{{ route('inquiries.destroy', $inquiry->I_ID) }}" class="inline-block">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" 
+                                                                    onclick="return confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')"
+                                                                    class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                                <i class="fas fa-trash mr-1"></i>Delete
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span class="text-xs text-gray-500 italic">Cannot edit/delete</span>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </td>

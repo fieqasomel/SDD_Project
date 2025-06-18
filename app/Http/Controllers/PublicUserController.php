@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PublicUser;
+use App\Models\Inquiry;
+use App\Models\Complaint;
+use App\Models\Agency;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
@@ -94,5 +97,81 @@ class PublicUserController extends Controller
         }
 
         return view('Dashboard.PublicUserDashboard', compact('user', 'stats'));
+    }
+
+    /**
+     * Display assignments for the authenticated public user
+     */
+    public function myAssignments(Request $request)
+    {
+        $user = Auth::guard('publicuser')->user();
+        
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Please log in to view your assignments.');
+        }
+
+        // Get all inquiries for this user that have been assigned
+        $query = Inquiry::with(['complaint.agency', 'complaint.mcmc'])
+            ->where('PU_ID', $user->PU_ID)
+            ->whereHas('complaint'); // Only inquiries that have assignments
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('I_Title', 'like', "%{$request->search}%")
+                  ->orWhere('I_Description', 'like', "%{$request->search}%")
+                  ->orWhere('I_ID', 'like', "%{$request->search}%");
+            });
+        }
+
+        // Apply agency filter
+        if ($request->filled('agency')) {
+            $query->whereHas('complaint', function($q) use ($request) {
+                $q->where('A_ID', $request->agency);
+            });
+        }
+
+        // Apply status filter
+        if ($request->filled('status')) {
+            $query->where('I_Status', $request->status);
+        }
+
+        // Apply date range filter
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $query->whereHas('complaint', function($q) use ($request) {
+                $q->whereBetween('C_AssignedDate', [$request->date_from, $request->date_to]);
+            });
+        }
+
+        $assignments = $query->orderBy('I_Date', 'desc')->paginate(10);
+
+        // Get agencies for filter dropdown (only agencies that have assignments for this user)
+        $agencies = Agency::whereHas('complaints.inquiry', function($q) use ($user) {
+            $q->where('PU_ID', $user->PU_ID);
+        })->orderBy('A_Name')->get();
+
+        // Get assignment statistics  
+        $stats = [
+            'total_inquiries' => Inquiry::where('PU_ID', $user->PU_ID)->count(),
+            'assigned' => Inquiry::where('PU_ID', $user->PU_ID)->whereHas('complaint')->count(),
+            'pending' => Inquiry::where('PU_ID', $user->PU_ID)->where(function($q) {
+                $q->where('I_Status', 'like', '%pending%')
+                  ->orWhere('I_Status', 'Pending');
+            })->count(),
+            'in_progress' => Inquiry::where('PU_ID', $user->PU_ID)->where(function($q) {
+                $q->where('I_Status', 'like', '%progress%')
+                  ->orWhere('I_Status', 'In Progress');
+            })->count(),
+            'resolved' => Inquiry::where('PU_ID', $user->PU_ID)->where(function($q) {
+                $q->where('I_Status', 'like', '%resolved%')
+                  ->orWhere('I_Status', 'Resolved');
+            })->count(),
+            'closed' => Inquiry::where('PU_ID', $user->PU_ID)->where(function($q) {
+                $q->where('I_Status', 'like', '%closed%')
+                  ->orWhere('I_Status', 'Closed');
+            })->count(),
+        ];
+
+        return view('ManageAssignment.ManageAssignments', compact('assignments', 'agencies', 'stats'));
     }
 }

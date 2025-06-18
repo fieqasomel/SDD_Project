@@ -3,12 +3,8 @@
 @section('title', 'Public User Dashboard - MySebenarnya System')
 
 @section('content')
-<<<<<<< HEAD
-=======
-
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 <!-- Hero Section -->
-<div class="bg-red-600 text-white">
+<div class="bg-blue-600 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="flex flex-col lg:flex-row items-center justify-between">
             <div class="text-center lg:text-left mb-6 lg:mb-0">
@@ -148,54 +144,6 @@
                             <p class="text-sm text-gray-600 mt-1">Our offices will be closed on June 20, 2023 for the national holiday.</p>
                             <p class="text-xs text-gray-500 mt-2">Posted on June 1, 2023</p>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="mt-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-3">Quick Actions</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <!-- Search Inquiries -->
-                <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-blue-200">
-                    <div class="p-6 text-center">
-                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                            <i class="fas fa-search text-white text-2xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-3">Search Inquiries</h3>
-                        <p class="text-gray-600 mb-6 leading-relaxed">Quick search through all inquiries by ID, title, or category</p>
-                        <a href="{{ route('inquiries.search') }}" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                            <i class="fas fa-search mr-2"></i>Search Now
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Public Inquiries Directory -->
-                <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200">
-                    <div class="p-6 text-center">
-                        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                            <i class="fas fa-eye text-white text-2xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-3">Public Inquiries</h3>
-                        <p class="text-gray-600 mb-6 leading-relaxed">Browse all public inquiries for transparency and reference</p>
-                        <a href="{{ route('inquiries.history') }}" class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                            <i class="fas fa-eye mr-2"></i>Browse Public
-                        </a>
-                    </div>
-                </div>
-
-                <!-- My Inquiries -->
-                <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-purple-200">
-                    <div class="p-6 text-center">
-                        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                            <i class="fas fa-folder-open text-white text-2xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-3">My Inquiries</h3>
-                        <p class="text-gray-600 mb-6 leading-relaxed">View and manage all your submitted inquiries</p>
-                        <a href="{{ route('inquiries.index') }}" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                            <i class="fas fa-folder-open mr-2"></i>View Mine
-                        </a>
                     </div>
                 </div>
             </div>

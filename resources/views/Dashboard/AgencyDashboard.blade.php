@@ -5,7 +5,7 @@
 @section('content')
 
 <!-- Hero Section -->
-<div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white">
+<div class="bg-teal-600 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="flex flex-col lg:flex-row items-center justify-between">
             <div class="text-center lg:text-left mb-6 lg:mb-0">
@@ -76,79 +76,73 @@
         </div>
     </div>
 
-    <!-- Features Grid -->
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- View Inquiries -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200">
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="fas fa-inbox text-white text-2xl"></i>
+    <!-- Recent Activity & Announcements -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-800">Recent Activity</h2>
+                    <a href="#" class="text-blue-600 hover:text-blue-800 text-sm">View All</a>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">View Inquiries</h3>
-                <p class="text-gray-600 mb-6 leading-relaxed">View and manage all inquiries assigned to your agency</p>
-                <a href="{{ route('inquiries.index') }}" class="btn-success inline-block">View Inquiries</a>
+                <div class="p-4">
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-plus-circle text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">You submitted a new inquiry</p>
+                                <p class="text-xs text-gray-500">Today at 10:30 AM</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-comment-alt text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">Agency responded to your inquiry #12345</p>
+                                <p class="text-xs text-gray-500">Yesterday at 2:15 PM</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                                <i class="fas fa-clock text-yellow-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">Status updated for inquiry #12340</p>
+                                <p class="text-xs text-gray-500">2 days ago</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Announcements -->
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="border-b border-gray-200 px-4 py-3 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-800">Announcements</h2>
+                    <a href="#" class="text-blue-600 hover:text-blue-800 text-sm">View All</a>
+                </div>
+                <div class="p-4">
+                    <div class="space-y-4">
+                        <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                            <h3 class="font-medium text-blue-800">System Maintenance</h3>
+                            <p class="text-sm text-gray-600 mt-1">The system will be undergoing maintenance on June 15, 2023 from 2:00 AM to 5:00 AM.</p>
+                            <p class="text-xs text-gray-500 mt-2">Posted on June 10, 2023</p>
+                        </div>
+                        <div class="p-3 bg-green-50 rounded-lg border border-green-100">
+                            <h3 class="font-medium text-green-800">New Features Added</h3>
+                            <p class="text-sm text-gray-600 mt-1">We've added new features to help you track your inquiries more efficiently.</p>
+                            <p class="text-xs text-gray-500 mt-2">Posted on June 5, 2023</p>
+                        </div>
+                        <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                            <h3 class="font-medium text-yellow-800">Holiday Notice</h3>
+                            <p class="text-sm text-gray-600 mt-1">Our offices will be closed on June 20, 2023 for the national holiday.</p>
+                            <p class="text-xs text-gray-500 mt-2">Posted on June 1, 2023</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Update Progress -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200">
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="fas fa-edit text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">Update Progress</h3>
-                <p class="text-gray-600 mb-6 leading-relaxed">Update the status and progress of ongoing inquiries</p>
-                <a href="#" class="btn-success inline-block">Update Progress</a>
-            </div>
-        </div>
-
-        <!-- Provide Feedback -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200">
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="fas fa-comments text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">Provide Feedback</h3>
-                <p class="text-gray-600 mb-6 leading-relaxed">Provide responses and feedback to public users</p>
-                <a href="#" class="btn-success inline-block">Provide Feedback</a>
-            </div>
-        </div>
-
-        <!-- Search Inquiries -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200">
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="fas fa-search text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">Search Inquiries</h3>
-                <p class="text-gray-600 mb-6 leading-relaxed">Search and filter inquiries by various criteria</p>
-                <a href="{{ route('inquiries.search') }}" class="btn-success inline-block">Search</a>
-            </div>
-        </div>
-
-        <!-- Generate Reports -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200">
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="fas fa-chart-bar text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">Agency Reports</h3>
-                <p class="text-gray-600 mb-6 leading-relaxed">View assigned inquiries and generate activity reports</p>
-                <a href="{{ route('inquiries.report') }}" class="btn-success inline-block">View Reports</a>
-            </div>
-        </div>
-
-        <!-- Manage Profile -->
-        <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200">
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="fas fa-user-edit text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">Manage Profile</h3>
-                <p class="text-gray-600 mb-6 leading-relaxed">Update agency information and account settings</p>
-                <a href="#" class="btn-success inline-block">Edit Profile</a>
-            </div>
-        </div>
-    </div>
 </div>
 @endsection

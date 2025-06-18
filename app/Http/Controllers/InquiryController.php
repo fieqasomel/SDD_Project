@@ -18,12 +18,24 @@ class InquiryController extends Controller
         try {
             // Initialize query
             $query = Inquiry::query();
+            $isPublicUser = false;
+            $isMCMC = false;
             
-            // If user is authenticated, filter by user
-            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+            // Check user type and apply appropriate filters
+            if (Auth::guard('publicuser')->check()) {
+                // Public User - show only their inquiries
+                $query->where('PU_ID', Auth::guard('publicuser')->user()->PU_ID);
+                $isPublicUser = true;
+            } elseif (Auth::guard('mcmc')->check()) {
+                // MCMC Staff - show all inquiries for management
+                // No additional filter needed, they can see all inquiries
+                $isMCMC = true;
+            } elseif (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                // Fallback for default guard PublicUser
                 $query->where('PU_ID', Auth::user()->PU_ID);
+                $isPublicUser = true;
             } else {
-                // If not authenticated or not a public user, return empty
+                // If not authenticated or invalid user type, return empty
                 return view('ManageInquiry.ManageInquiries', [
                     'inquiries' => collect([]),
                     'stats' => [
@@ -32,7 +44,8 @@ class InquiryController extends Controller
                         'in_progress' => 0,
                         'resolved' => 0,
                         'closed' => 0
-                    ]
+                    ],
+                    'isMCMC' => false
                 ]);
             }
 
@@ -44,6 +57,14 @@ class InquiryController extends Controller
                       ->orWhere('I_Title', 'like', "%{$searchTerm}%")
                       ->orWhere('I_Description', 'like', "%{$searchTerm}%")
                       ->orWhere('I_Category', 'like', "%{$searchTerm}%");
+                    
+                    // For MCMC, also search by Public User details
+                    if (Auth::guard('mcmc')->check()) {
+                        $q->orWhereHas('publicUser', function($userQuery) use ($searchTerm) {
+                            $userQuery->where('PU_Name', 'like', "%{$searchTerm}%")
+                                     ->orWhere('PU_Email', 'like', "%{$searchTerm}%");
+                        });
+                    }
                 });
             }
             
@@ -55,11 +76,25 @@ class InquiryController extends Controller
                 $query->where('I_Status', $request->status);
             }
 
-            // Get inquiries
-            $inquiries = $query->orderBy('I_Date', 'desc')->get();
+            // Get inquiries with relationships (especially for MCMC to see user details)
+            if ($isMCMC) {
+                $inquiries = $query->with(['publicUser', 'complaints'])->orderBy('I_Date', 'desc')->get();
+            } else {
+                $inquiries = $query->orderBy('I_Date', 'desc')->get();
+            }
             
-            // Calculate statistics (for all user's inquiries, not just filtered)
-            $allInquiries = Inquiry::where('PU_ID', Auth::user()->PU_ID)->get();
+            // Calculate statistics based on user type
+            if ($isPublicUser) {
+                // For Public Users - only their inquiries
+                $userId = Auth::guard('publicuser')->check() ? 
+                         Auth::guard('publicuser')->user()->PU_ID : 
+                         Auth::user()->PU_ID;
+                $allInquiries = Inquiry::where('PU_ID', $userId)->get();
+            } else {
+                // For MCMC - all inquiries in the system
+                $allInquiries = Inquiry::all();
+            }
+            
             $stats = [
                 'total' => $allInquiries->count(),
                 'pending' => $allInquiries->where('I_Status', 'Pending')->count(),
@@ -70,7 +105,8 @@ class InquiryController extends Controller
             
             return view('ManageInquiry.ManageInquiries', [
                 'inquiries' => $inquiries,
-                'stats' => $stats
+                'stats' => $stats,
+                'isMCMC' => $isMCMC
             ]);
             
         } catch (\Exception $e) {
@@ -84,7 +120,8 @@ class InquiryController extends Controller
                     'in_progress' => 0,
                     'resolved' => 0,
                     'closed' => 0
-                ]
+                ],
+                'isMCMC' => false
             ]);
         }
     }
@@ -185,22 +222,36 @@ class InquiryController extends Controller
     public function show(string $id)
     {
         try {
-            // Find the inquiry by ID
-            $inquiry = Inquiry::where('I_ID', $id)->first();
+            // Find the inquiry by ID with related user data
+            $inquiry = Inquiry::with('publicUser')->where('I_ID', $id)->first();
             
             // Check if inquiry exists
             if (!$inquiry) {
                 return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
             }
             
-            // Check if user owns this inquiry (for security)
-            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+            // Check authorization based on user type
+            if (Auth::guard('mcmc')->check()) {
+                // MCMC staff can view all inquiries
+                $isMCMC = true;
+            } elseif (Auth::guard('publicuser')->check()) {
+                // Public users can only view their own inquiries
+                if ($inquiry->PU_ID !== Auth::guard('publicuser')->user()->PU_ID) {
+                    return redirect()->route('inquiries.index')->with('error', 'You are not authorized to view this inquiry.');
+                }
+                $isMCMC = false;
+            } elseif (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                // Fallback for default guard
                 if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
                     return redirect()->route('inquiries.index')->with('error', 'You are not authorized to view this inquiry.');
                 }
+                $isMCMC = false;
+            } else {
+                // Not authenticated or invalid user type
+                return redirect()->route('login')->with('error', 'Please log in to view inquiries.');
             }
             
-            return view('ManageInquiry.ViewInquiryDetails', compact('inquiry'));
+            return view('ManageInquiry.ViewInquiryDetails', compact('inquiry', 'isMCMC'));
             
         } catch (\Exception $e) {
             \Log::error('Error viewing inquiry: ' . $e->getMessage());
@@ -747,6 +798,32 @@ class InquiryController extends Controller
     }
 
     /**
+     * MCMC Staff - View Individual Inquiry Details with Complete Information
+     * Display complete inquiry information for MCMC staff review
+     */
+    public function viewInquiryDetailsForMCMC($id)
+    {
+        try {
+            // Check if user is MCMC staff only
+            if (!Auth::guard('mcmc')->check()) {
+                return redirect()->route('home')->with('error', 'Access denied. MCMC staff only.');
+            }
+
+            $inquiry = Inquiry::with(['publicUser', 'mcmcProcessor', 'complaints.agency'])->where('I_ID', $id)->first();
+
+            if (!$inquiry) {
+                return redirect()->back()->with('error', 'Inquiry not found.');
+            }
+
+            return view('ManageInquiry.ViewInquiryDetails', compact('inquiry'));
+
+        } catch (\Exception $e) {
+            \Log::error('Error in viewInquiryDetailsForMCMC: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error loading inquiry details.');
+        }
+    }
+
+    /**
      * MCMC Staff - View Previous Inquiries
      * Display all previously filtered inquiries with search and filter options
      */
@@ -973,5 +1050,97 @@ class InquiryController extends Controller
         }
         
         return 'unknown';
+    }
+
+    /**
+     * MCMC Staff - Get inquiry details for modal display
+     */
+    public function getInquiryDetails($id)
+    {
+        try {
+            // Check if user is MCMC staff
+            if (!Auth::guard('mcmc')->check()) {
+                return response()->json(['success' => false, 'message' => 'Access denied. MCMC staff only.'], 403);
+            }
+
+            $inquiry = Inquiry::with('publicUser')->where('I_ID', $id)->first();
+
+            if (!$inquiry) {
+                return response()->json(['success' => false, 'message' => 'Inquiry not found.'], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'inquiry' => [
+                    'I_ID' => $inquiry->I_ID,
+                    'I_Title' => $inquiry->I_Title,
+                    'I_Description' => $inquiry->I_Description,
+                    'I_Category' => $inquiry->I_Category,
+                    'I_Status' => $inquiry->I_Status,
+                    'I_Date' => $inquiry->I_Date,
+                    'I_filename' => $inquiry->I_filename,
+                    'mcmc_status' => $inquiry->mcmc_status ?? 'Pending Review',
+                    'public_user' => $inquiry->publicUser ? [
+                        'PU_Name' => $inquiry->publicUser->PU_Name,
+                        'PU_Email' => $inquiry->publicUser->PU_Email,
+                    ] : null
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in getInquiryDetails: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error loading inquiry details.'], 500);
+        }
+    }
+
+    /**
+     * MCMC Staff - Quick action on inquiries
+     */
+    public function quickAction(Request $request, $id)
+    {
+        try {
+            // Check if user is MCMC staff
+            if (!Auth::guard('mcmc')->check()) {
+                return response()->json(['success' => false, 'message' => 'Access denied. MCMC staff only.'], 403);
+            }
+
+            $inquiry = Inquiry::where('I_ID', $id)->first();
+
+            if (!$inquiry) {
+                return response()->json(['success' => false, 'message' => 'Inquiry not found.'], 404);
+            }
+
+            $action = $request->get('action');
+            $notes = $request->get('notes', '');
+            $mcmcStaff = Auth::guard('mcmc')->user();
+
+            switch ($action) {
+                case 'forward':
+                    if (($inquiry->mcmc_status ?? '') !== 'Approved') {
+                        return response()->json(['success' => false, 'message' => 'Only approved inquiries can be forwarded.'], 400);
+                    }
+
+                    // Update inquiry to forwarded status
+                    $inquiry->update([
+                        'mcmc_status' => 'Forwarded',
+                        'I_Status' => 'Forwarded',
+                        'mcmc_forwarded_by' => $mcmcStaff->M_ID,
+                        'mcmc_forwarded_at' => now(),
+                        'mcmc_notes' => $notes
+                    ]);
+
+                    // Log the action
+                    \Log::info("Inquiry {$id} forwarded to agency by MCMC staff {$mcmcStaff->M_Name}");
+
+                    return response()->json(['success' => true, 'message' => 'Inquiry forwarded successfully.']);
+
+                default:
+                    return response()->json(['success' => false, 'message' => 'Invalid action.'], 400);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Error in quickAction: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error processing quick action.'], 500);
+        }
     }
 }

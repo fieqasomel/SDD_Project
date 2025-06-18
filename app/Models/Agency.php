@@ -75,4 +75,10 @@ class Agency extends Authenticatable
     {
         return $this->A_Password;
     }
+
+    // Relationship with Complaints
+    public function complaints()
+    {
+        return $this->hasMany(Complaint::class, 'A_ID', 'A_ID');
+    }
 }

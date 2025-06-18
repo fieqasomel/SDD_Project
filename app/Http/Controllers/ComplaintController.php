@@ -54,7 +54,19 @@ class ComplaintController extends Controller
         // Get statistics
         $stats = $this->getAssignmentStats();
         
-        return view('ManageAssignment.ManageAssignments', compact('assignments', 'agencies', 'stats'));
+        // Get unassigned inquiries (for assign button)
+        $unassignedInquiries = Inquiry::with('publicUser')
+                                     ->where('I_Status', 'Pending')
+                                     ->whereNotExists(function ($query) {
+                                         $query->select(DB::raw(1))
+                                               ->from('complaint')
+                                               ->whereColumn('complaint.I_ID', 'inquiry.I_ID');
+                                     })
+                                     ->orderBy('I_Date', 'desc')
+                                     ->limit(10)
+                                     ->get();
+        
+        return view('ManageAssignment.ManageAssignments', compact('assignments', 'agencies', 'stats', 'unassignedInquiries'));
     }
 
     /**
@@ -164,7 +176,7 @@ class ComplaintController extends Controller
             return redirect()->route('assignments.index')->with('error', 'No other agencies available for reassignment.');
         }
         
-        return view('ManageAssignment.ReassigneInquiry', compact('complaint', 'agencies'));
+        return view('ManageAssignment.ReassignedInquiry', compact('complaint', 'agencies'));
     }
 
     /**

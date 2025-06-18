@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PublicUserController;
 use App\Http\Controllers\AgencyController;
@@ -15,7 +16,6 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-<<<<<<< HEAD
 // Test route for debugging
 Route::get('/test-csrf', function () {
     return response()->json(['csrf_token' => csrf_token()]);
@@ -33,10 +33,7 @@ Route::get('/update-mcmc-password', function () {
 });
 
 // Test route for auth debugging
-=======
 // Debug Routes
-Route::get('/test-csrf', fn() => response()->json(['csrf_token' => csrf_token()]));
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 Route::get('/test-auth', function () {
     return response()->json([
         'authenticated' => Auth::check(),
@@ -48,7 +45,6 @@ Route::get('/test-auth', function () {
         'user' => Auth::user() ? get_class(Auth::user()) : null
     ]);
 });
-<<<<<<< HEAD
 
 // Simple login page for testing
 Route::get('/login-simple', function () {
@@ -112,9 +108,6 @@ Route::get('/test-mcmc-auth', function () {
     
     return $output;
 });
-=======
-Route::get('/login-simple', fn() => view('auth.login-simple'));
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -133,19 +126,10 @@ Route::post('/register/publicuser', [AuthController::class, 'registerPublicUser'
 Route::post('/register/agency', [AuthController::class, 'registerAgency'])->name('register.agency.submit');
 Route::post('/register/mcmc', [AuthController::class, 'registerMCMC'])->name('register.mcmc.submit');
 
-<<<<<<< HEAD
-// Home route for authenticated users
-=======
 // Dashboards
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
     Route::get('/home', [AuthController::class, 'home'])->name('home');
 });
-
-<<<<<<< HEAD
-// Protected Dashboard Routes
-=======
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 Route::middleware('auth:publicuser')->group(function () {
     Route::get('/publicuser/dashboard', [PublicUserController::class, 'dashboard'])->name('publicuser.dashboard');
 });
@@ -156,16 +140,6 @@ Route::middleware('auth:agency')->group(function () {
 
 Route::middleware('auth:mcmc')->group(function () {
     Route::get('/mcmc/dashboard', [MCMCController::class, 'dashboard'])->name('mcmc.dashboard');
-<<<<<<< HEAD
-    
-    // MCMC Inquiry Management Routes
-    Route::get('/mcmc/inquiries/new', [InquiryController::class, 'viewNewInquiries'])->name('inquiries.mcmc.new');
-    Route::get('/mcmc/inquiries/{id}/filter', [InquiryController::class, 'filterInquiry'])->name('inquiries.mcmc.filter');
-    Route::post('/mcmc/inquiries/{id}/filter', [InquiryController::class, 'processInquiryFilter'])->name('inquiries.mcmc.process');
-    Route::get('/mcmc/inquiries/previous', [InquiryController::class, 'viewPreviousInquiries'])->name('inquiries.mcmc.previous');
-    Route::get('/mcmc/inquiries/report', [InquiryController::class, 'generateMCMCReport'])->name('inquiries.mcmc.report');
-    Route::get('/mcmc/inquiries/audit', [InquiryController::class, 'auditLog'])->name('inquiries.mcmc.audit');
-=======
 
     // Agency Management
     Route::get('/mcmc/agencies', [MCMCController::class, 'manageAgencies'])->name('mcmc.agencies.index');
@@ -187,82 +161,40 @@ Route::middleware('auth:mcmc')->group(function () {
     // Logs
     Route::get('/mcmc/activity-logs', [MCMCController::class, 'viewActivityLogs'])->name('mcmc.activity.index');
 
-    // Inquiries (Management)
-    Route::get('/mcmc/inquiries/new', [InquiryController::class, 'index'])->name('mcmc.inquiries.new');
-    Route::get('/mcmc/inquiries/processed', [InquiryController::class, 'index'])->name('mcmc.inquiries.processed');
-    Route::get('/mcmc/inquiries/{id}', [InquiryController::class, 'show'])->name('mcmc.inquiries.show');
-    Route::post('/mcmc/inquiries/{id}/validate', [InquiryController::class, 'update'])->name('mcmc.inquiries.validate');
+    // Inquiries (Management) - MCMC Only
+    Route::get('/mcmc/inquiries/{id}/details', [InquiryController::class, 'getInquiryDetails'])->name('mcmc.inquiries.details');
+    Route::post('/mcmc/inquiries/{id}/quick-action', [InquiryController::class, 'quickAction'])->name('mcmc.inquiries.quick-action');
+    Route::get('/mcmc/inquiries/new', [InquiryController::class, 'viewNewInquiries'])->name('mcmc.inquiries.new');
+    Route::get('/mcmc/inquiries/processed', [InquiryController::class, 'viewPreviousInquiries'])->name('mcmc.inquiries.processed');
+    Route::get('/mcmc/inquiries/{id}', [InquiryController::class, 'viewInquiryDetailsForMCMC'])->name('mcmc.inquiries.show');
+    Route::get('/mcmc/inquiries/{id}/filter', [InquiryController::class, 'filterInquiry'])->name('mcmc.inquiries.filter');
+    Route::post('/mcmc/inquiries/{id}/process', [InquiryController::class, 'processInquiryFilter'])->name('mcmc.inquiries.process');
 
-    Route::get('/mcmc/inquiry-reports', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.generate');
-    Route::post('/mcmc/inquiry-reports/pdf', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.pdf');
-    Route::post('/mcmc/inquiry-reports/excel', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.excel');
+    // Reports and Audit - MCMC Only
+    Route::get('/mcmc/inquiry-reports', [InquiryController::class, 'generateMCMCReport'])->name('mcmc.inquiry-reports.generate');
+    Route::post('/mcmc/inquiry-reports/pdf', [InquiryController::class, 'generateMCMCReport'])->name('mcmc.inquiry-reports.pdf');
+    Route::post('/mcmc/inquiry-reports/excel', [InquiryController::class, 'generateMCMCReport'])->name('mcmc.inquiry-reports.excel');
 
-    Route::get('/mcmc/inquiry-activity', [InquiryController::class, 'history'])->name('mcmc.inquiry-activity.index');
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
+    Route::get('/mcmc/inquiry-activity', [InquiryController::class, 'auditLog'])->name('mcmc.inquiry-activity.index');
 });
 
 // Inquiry Routes
 Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
-<<<<<<< HEAD
-    // Special routes that need to come before resource routes
-=======
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
     Route::get('inquiries/public', [InquiryController::class, 'publicInquiries'])->name('inquiries.public');
     Route::get('inquiries/search', [InquiryController::class, 'search'])->name('inquiries.search');
     Route::get('inquiries/report', [InquiryController::class, 'generateReport'])->name('inquiries.report');
     Route::get('inquiries/history', [InquiryController::class, 'inquiryHistory'])->name('inquiries.history');
-<<<<<<< HEAD
-    
-    // Resource routes
-    Route::resource('inquiries', InquiryController::class);
-});
-
-// Alternative individual middleware approach - if the above doesn't work
-=======
     Route::get('inquiries/{id}/delete', [InquiryController::class, 'delete'])->name('inquiries.delete');
     Route::resource('inquiries', InquiryController::class);
 });
 
 // Individual middleware (optional)
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 Route::group(['middleware' => ['auth:publicuser']], function () {
     Route::prefix('publicuser')->group(function () {
         Route::get('inquiries', [InquiryController::class, 'index'])->name('publicuser.inquiries');
         Route::get('inquiries/create', [InquiryController::class, 'create'])->name('publicuser.inquiries.create');
+        Route::get('assignments', [PublicUserController::class, 'myAssignments'])->name('publicuser.assignments');
     });
-<<<<<<< HEAD
-});
-
-// Assignment Management Routes - Available to all authenticated users
-Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
-    // Assignment management routes
-    Route::get('assignments', [App\Http\Controllers\ComplaintController::class, 'index'])->name('assignments.index');
-    Route::get('assignments/report', [App\Http\Controllers\ComplaintController::class, 'generateAssignedReport'])->name('assignments.report');
-    
-    // Assignment actions (MCMC only)
-    Route::get('inquiries/{inquiry}/assign', [App\Http\Controllers\ComplaintController::class, 'assignInquiry'])->name('assignments.assign');
-    Route::post('inquiries/{inquiry}/assign', [App\Http\Controllers\ComplaintController::class, 'storeAssignment'])->name('assignments.store');
-    
-    // View assignment details
-    Route::get('assignments/{complaint}/view', [App\Http\Controllers\ComplaintController::class, 'viewAssignedInquiry'])->name('assignments.view');
-    Route::get('assignments/{complaint}/history', [App\Http\Controllers\ComplaintController::class, 'trackAssignmentHistory'])->name('assignments.history');
-    
-    // Reassignment (MCMC only)
-    Route::get('assignments/{complaint}/reassign', [App\Http\Controllers\ComplaintController::class, 'reassignInquiry'])->name('assignments.reassign');
-    Route::post('assignments/{complaint}/reassign', [App\Http\Controllers\ComplaintController::class, 'storeReassignment'])->name('assignments.storeReassignment');
-    
-    // Review assignment (Agency only)
-    Route::get('assignments/{complaint}/review', [App\Http\Controllers\ComplaintController::class, 'reviewInquiry'])->name('assignments.review');
-    Route::post('assignments/{complaint}/review', [App\Http\Controllers\ComplaintController::class, 'updateReview'])->name('assignments.updateReview');
-    
-    // Verification workflow (Agency only)
-    Route::get('assignments/{complaint}/verify', [App\Http\Controllers\ComplaintController::class, 'verifyAssignment'])->name('assignments.verify');
-    Route::post('assignments/{complaint}/verify', [App\Http\Controllers\ComplaintController::class, 'processVerification'])->name('assignments.processVerification');
-    
-    // Rejected assignments (MCMC only)
-    Route::get('assignments/rejected', [App\Http\Controllers\ComplaintController::class, 'rejectedAssignments'])->name('assignments.rejected');
-=======
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 });
 
 // Assignment Routes
@@ -346,11 +278,7 @@ Route::middleware([
         // If no user type can be determined, redirect to login
         return redirect()->route('login')->with('message', 'Please log in to access your dashboard.');
     })->name('dashboard');
-<<<<<<< HEAD
-});
-=======
 });
 
 // Optional
 Route::middleware(['multiauth'])->get('/test-sidebar', fn() => view('test-sidebar'))->name('test.sidebar');
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
