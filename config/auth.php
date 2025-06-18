@@ -36,23 +36,20 @@ return [
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'users',
-        ],
-        'publicuser' => [
-            'driver' => 'session',
-            'provider' => 'publicusers',
-        ],
-        'agency' => [
-            'driver' => 'session',
-            'provider' => 'agencies',
-        ],
-        'mcmc' => [
-            'driver' => 'session',
-            'provider' => 'mcmcs',
-        ],
+    'publicuser' => [
+        'driver' => 'session',
+        'provider' => 'publicusers',
     ],
+    'agency' => [
+        'driver' => 'session',
+        'provider' => 'agencies',
+    ],
+    'mcmc' => [
+        'driver' => 'session',
+        'provider' => 'mcmcs',
+    ],
+],
+
 
     /*
     |--------------------------------------------------------------------------
@@ -72,28 +69,20 @@ return [
     */
 
     'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
-        ],
-        'publicusers' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\PublicUser::class,
-        ],
-        'agencies' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Agency::class,
-        ],
-        'mcmcs' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\MCMC::class,
-        ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+    'publicusers' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\PublicUser::class,
     ],
+    'agencies' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\Agency::class,
+    ],
+    'mcmcs' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\MCMC::class,
+    ],
+],
+
 
     /*
     |--------------------------------------------------------------------------
