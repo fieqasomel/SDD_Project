@@ -13,7 +13,7 @@
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 rounded-full mb-4 backdrop-blur-sm">
                         <i class="fas fa-sign-in-alt text-2xl"></i>
                     </div>
-                    <h2 class="text-3xl font-bold mb-2">Login to SDD System</h2>
+                    <h2 class="text-3xl font-bold mb-2">Login to MySebenarnya System</h2>
                     <p class="text-lg opacity-90">Select your user type and enter your credentials</p>
                 </div>
             </div>

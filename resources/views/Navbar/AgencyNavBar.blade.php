@@ -21,17 +21,17 @@
                     <i class="fas fa-tachometer-alt mr-2 group-hover:text-pink-300"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="{{ route('publicuser.inquiries') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
-                    <span>My Inquiries</span>
+                <a href="{{ route('inquiries.index') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-inbox mr-2 group-hover:text-pink-300"></i>
+                    <span>View Inquiries</span>
                 </a>
-                <a href="{{ route('publicuser.inquiries') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
+                <a href="{{ route('assignments.index') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-tasks mr-2 group-hover:text-pink-300"></i>
                     <span>My Assignments</span>
                 </a>
-                <a href="{{ route('publicuser.inquiries') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
-                    <span>My Tracker</span>
+                <a href="{{ route('inquiries.report') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-chart-bar mr-2 group-hover:text-pink-300"></i>
+                    <span>Reports</span>
                 </a>
             </div>
         </nav>
@@ -63,6 +63,22 @@
             
             // Check on resize
             window.addEventListener('resize', checkScreenSize);
+        }
+    });
+    
+    // Toggle user menu
+    function toggleUserMenu() {
+        const userMenu = document.getElementById('userMenu');
+        userMenu.classList.toggle('hidden');
+    }
+    
+    // Close user menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const userMenu = document.getElementById('userMenu');
+        const userButton = event.target.closest('button');
+        
+        if (!userButton || !userButton.onclick) {
+            userMenu.classList.add('hidden');
         }
     });
 </script>

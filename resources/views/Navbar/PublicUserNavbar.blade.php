@@ -65,4 +65,20 @@
             window.addEventListener('resize', checkScreenSize);
         }
     });
+    
+    // Toggle user menu
+    function toggleUserMenu() {
+        const userMenu = document.getElementById('userMenu');
+        userMenu.classList.toggle('hidden');
+    }
+    
+    // Close user menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const userMenu = document.getElementById('userMenu');
+        const userButton = event.target.closest('button');
+        
+        if (!userButton || !userButton.onclick) {
+            userMenu.classList.add('hidden');
+        }
+    });
 </script>
