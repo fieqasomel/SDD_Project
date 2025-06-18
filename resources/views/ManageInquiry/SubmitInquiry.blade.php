@@ -1,9 +1,8 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Submit New Inquiry') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
+
+@section('title', 'Submit New Inquiry - MySebenarnya System')
+
+@section('content')
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -12,7 +11,7 @@
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Submit New Inquiry</h1>
                 <p class="text-gray-600">Fill out the form below to submit your inquiry</p>
             </div>
-            <a href="{{ route('inquiries.index') }}" 
+            <a href="{{ route('publicuser.inquiries') }}" 
                class="inline-flex items-center px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 mt-4 sm:mt-0">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Inquiries
             </a>
@@ -26,6 +25,14 @@
                 </h3>
             </div>
             <div class="p-6">
+                <!-- Display general errors -->
+                @if($errors->has('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                    <strong class="font-bold">Error!</strong>
+                    <span class="block sm:inline">{{ $errors->first('error') }}</span>
+                </div>
+                @endif
+
                 <form method="POST" action="{{ route('inquiries.store') }}" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     
@@ -119,7 +126,7 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row justify-between gap-4">
-                        <a href="{{ route('inquiries.index') }}" 
+                        <a href="{{ route('publicuser.inquiries') }}" 
                            class="inline-flex items-center justify-center px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                             <i class="fas fa-times mr-2"></i>Cancel
                         </a>
@@ -173,4 +180,4 @@
         }
     });
 </script>
-</x-app-layout>
+@endsection

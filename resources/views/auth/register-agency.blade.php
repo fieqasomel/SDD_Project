@@ -52,8 +52,8 @@
                         <div class="space-y-6">
                             <div class="grid md:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Agency Name *</label>
-                                    <input type="text" id="name" name="name" value="{{ old('name') }}" maxlength="50" required
+                                    <label for="agency_name" class="block text-sm font-semibold text-gray-700 mb-2">Agency Name *</label>
+                                    <input type="text" id="agency_name" name="agency_name" value="{{ old('agency_name') }}" maxlength="50" required
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200">
                                 </div>
                                 <div>

@@ -5,15 +5,103 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PublicUserController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\MCMCController;
-<<<<<<< HEAD
-
-=======
->>>>>>> b20c6e3d7e5e3fe9b616e16d447a729303ffcebc
 use App\Http\Controllers\InquiryController;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
+
+// Test route for debugging
+Route::get('/test-csrf', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+});
+
+// Test route to update MCMC password
+Route::get('/update-mcmc-password', function () {
+    $mcmc = \App\Models\MCMC::find('M000001');
+    if ($mcmc) {
+        $mcmc->M_Password = 'password123';
+        $mcmc->save();
+        return 'Password updated for ' . $mcmc->M_userName . ' (ID: ' . $mcmc->M_ID . ')';
+    }
+    return 'MCMC user not found';
+});
+
+// Test route for auth debugging
+Route::get('/test-auth', function () {
+    return response()->json([
+        'authenticated' => Auth::check(),
+        'guards' => [
+            'publicuser' => Auth::guard('publicuser')->check(),
+            'agency' => Auth::guard('agency')->check(),
+            'mcmc' => Auth::guard('mcmc')->check(),
+        ],
+        'user' => Auth::user() ? get_class(Auth::user()) : null
+    ]);
+});
+
+// Simple login page for testing
+Route::get('/login-simple', function () {
+    return view('auth.login-simple');
+});
+
+// Debug login page
+Route::get('/login-debug', function () {
+    return view('auth.login-debug');
+});
+
+// Test POST route to see if form submission works
+Route::post('/test-login', function (Request $request) {
+    return response()->json([
+        'message' => 'Form submission works!',
+        'data' => $request->all(),
+        'csrf_valid' => true
+    ]);
+});
+
+// Button test page
+Route::get('/test-button', function () {
+    return view('auth.test-button');
+});
+
+// Test MCMC login page
+Route::get('/test-mcmc-login', function () {
+    return view('auth.test-mcmc-login');
+});
+
+// Test MCMC authentication manually
+Route::get('/test-mcmc-auth', function () {
+    $username = 'MCMC';
+    $password = 'password123';
+    
+    $user = \App\Models\MCMC::where('M_userName', $username)->first();
+    
+    $output = '<h2>MCMC Authentication Test</h2>';
+    $output .= '<p><strong>Username:</strong> ' . $username . '</p>';
+    $output .= '<p><strong>User Found:</strong> ' . ($user ? 'YES' : 'NO') . '</p>';
+    
+    if ($user) {
+        $output .= '<p><strong>User ID:</strong> ' . $user->M_ID . '</p>';
+        $output .= '<p><strong>User Name:</strong> ' . $user->M_Name . '</p>';
+        $output .= '<p><strong>Password Hash:</strong> ' . substr($user->M_Password, 0, 20) . '...</p>';
+        
+        $passwordCheck = \Hash::check($password, $user->getAuthPassword());
+        $output .= '<p><strong>Password Check:</strong> ' . ($passwordCheck ? 'VALID' : 'INVALID') . '</p>';
+        
+        if ($passwordCheck) {
+            // Try to login
+            \Auth::guard('mcmc')->login($user);
+            $output .= '<p><strong>Login Attempt:</strong> SUCCESS</p>';
+            $output .= '<p><strong>Authenticated:</strong> ' . (\Auth::guard('mcmc')->check() ? 'YES' : 'NO') . '</p>';
+            
+            if (\Auth::guard('mcmc')->check()) {
+                $output .= '<p><a href="/mcmc/dashboard">Go to MCMC Dashboard</a></p>';
+            }
+        }
+    }
+    
+    return $output;
+});
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -30,6 +118,11 @@ Route::post('/register/publicuser', [AuthController::class, 'registerPublicUser'
 Route::post('/register/agency', [AuthController::class, 'registerAgency'])->name('register.agency.submit');
 Route::post('/register/mcmc', [AuthController::class, 'registerMCMC'])->name('register.mcmc.submit');
 
+// Home route for authenticated users
+Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
+    Route::get('/home', [AuthController::class, 'home'])->name('home');
+});
+
 // Protected Dashboard Routes
 Route::middleware('auth:publicuser')->group(function () {
     Route::get('/publicuser/dashboard', [PublicUserController::class, 'dashboard'])->name('publicuser.dashboard');
@@ -41,55 +134,34 @@ Route::middleware('auth:agency')->group(function () {
 
 Route::middleware('auth:mcmc')->group(function () {
     Route::get('/mcmc/dashboard', [MCMCController::class, 'dashboard'])->name('mcmc.dashboard');
-<<<<<<< HEAD
     
-    // Agency Management Routes
-    Route::get('/mcmc/agencies', [MCMCController::class, 'manageAgencies'])->name('mcmc.agencies.index');
-    Route::get('/mcmc/agencies/create', [MCMCController::class, 'createAgency'])->name('mcmc.agencies.create');
-    Route::post('/mcmc/agencies', [MCMCController::class, 'storeAgency'])->name('mcmc.agencies.store');
-    Route::get('/mcmc/agencies/{agency}/edit', [MCMCController::class, 'editAgency'])->name('mcmc.agencies.edit');
-    Route::put('/mcmc/agencies/{agency}', [MCMCController::class, 'updateAgency'])->name('mcmc.agencies.update');
-    Route::delete('/mcmc/agencies/{agency}', [MCMCController::class, 'destroyAgency'])->name('mcmc.agencies.destroy');
-    Route::post('/mcmc/agencies/{agency}/reset-password', [MCMCController::class, 'resetAgencyPassword'])->name('mcmc.agencies.reset-password');
-    
-    // User Data Access Routes
-    Route::get('/mcmc/users', [MCMCController::class, 'viewAllUsers'])->name('mcmc.users.index');
-    Route::get('/mcmc/users/{user}', [MCMCController::class, 'viewUserDetails'])->name('mcmc.users.show');
-    
-    // Reporting and Analytics Routes
-    Route::get('/mcmc/reports', [MCMCController::class, 'generateUserReport'])->name('mcmc.reports.index');
-    Route::get('/mcmc/reports/download', [MCMCController::class, 'downloadUserReport'])->name('mcmc.reports.download');
-    
-    // Activity Logs
-    Route::get('/mcmc/activity-logs', [MCMCController::class, 'viewActivityLogs'])->name('mcmc.activity.index');
-    
-    // MCMC Inquiry Management Routes - using InquiryController
-    Route::get('/mcmc/inquiries/new', [InquiryController::class, 'index'])->name('mcmc.inquiries.new');
-    Route::get('/mcmc/inquiries/processed', [InquiryController::class, 'index'])->name('mcmc.inquiries.processed');
-    Route::get('/mcmc/inquiries/{id}', [InquiryController::class, 'show'])->name('mcmc.inquiries.show');
-    Route::post('/mcmc/inquiries/{id}/validate', [InquiryController::class, 'update'])->name('mcmc.inquiries.validate');
-    
-    // MCMC Report Generation - using InquiryController
-    Route::get('/mcmc/inquiry-reports', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.generate');
-    Route::post('/mcmc/inquiry-reports/pdf', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.pdf');
-    Route::post('/mcmc/inquiry-reports/excel', [InquiryController::class, 'generateReport'])->name('mcmc.inquiry-reports.excel');
-    
-    // MCMC Activity Log - using history method
-    Route::get('/mcmc/inquiry-activity', [InquiryController::class, 'history'])->name('mcmc.inquiry-activity.index');
-=======
->>>>>>> b20c6e3d7e5e3fe9b616e16d447a729303ffcebc
+    // MCMC Inquiry Management Routes
+    Route::get('/mcmc/inquiries/new', [InquiryController::class, 'viewNewInquiries'])->name('inquiries.mcmc.new');
+    Route::get('/mcmc/inquiries/{id}/filter', [InquiryController::class, 'filterInquiry'])->name('inquiries.mcmc.filter');
+    Route::post('/mcmc/inquiries/{id}/filter', [InquiryController::class, 'processInquiryFilter'])->name('inquiries.mcmc.process');
+    Route::get('/mcmc/inquiries/previous', [InquiryController::class, 'viewPreviousInquiries'])->name('inquiries.mcmc.previous');
+    Route::get('/mcmc/inquiries/report', [InquiryController::class, 'generateMCMCReport'])->name('inquiries.mcmc.report');
+    Route::get('/mcmc/inquiries/audit', [InquiryController::class, 'auditLog'])->name('inquiries.mcmc.audit');
 });
 
 // Inquiry Management Routes - Available to all authenticated users
 Route::middleware(['auth:publicuser,agency,mcmc'])->group(function () {
     // Special routes that need to come before resource routes
+    Route::get('inquiries/public', [InquiryController::class, 'publicInquiries'])->name('inquiries.public');
     Route::get('inquiries/search', [InquiryController::class, 'search'])->name('inquiries.search');
-    Route::get('inquiries/history', [InquiryController::class, 'history'])->name('inquiries.history');
     Route::get('inquiries/report', [InquiryController::class, 'generateReport'])->name('inquiries.report');
-    Route::get('inquiries/{id}/delete', [InquiryController::class, 'delete'])->name('inquiries.delete');
+    Route::get('inquiries/history', [InquiryController::class, 'inquiryHistory'])->name('inquiries.history');
     
     // Resource routes
     Route::resource('inquiries', InquiryController::class);
+});
+
+// Alternative individual middleware approach - if the above doesn't work
+Route::group(['middleware' => ['auth:publicuser']], function () {
+    Route::prefix('publicuser')->group(function () {
+        Route::get('inquiries', [InquiryController::class, 'index'])->name('publicuser.inquiries');
+        Route::get('inquiries/create', [InquiryController::class, 'create'])->name('publicuser.inquiries.create');
+    });
 });
 
 // Assignment Management Routes - Available to all authenticated users
@@ -131,13 +203,3 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
-
-<<<<<<< HEAD
-// Home route using the AuthController
-Route::get('/home', [AuthController::class, 'home'])->name('home');
-=======
-// Test route for sidebar (you can remove this later)
-Route::middleware(['multiauth'])->get('/test-sidebar', function () {
-    return view('test-sidebar');
-})->name('test.sidebar');
->>>>>>> 847bd712ee5c51c00a5362abdefcc7e763f5e46a

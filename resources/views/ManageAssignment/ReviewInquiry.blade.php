@@ -32,7 +32,7 @@
                                     {{ $complaint->inquiry->I_Status }}
                                 </span>
                             </p>
-                            <p><strong>Submitted Date:</strong> {{ $complaint->inquiry->I_Date->format('d M Y') }}</p>
+                            <p><strong>Submitted Date:</strong> {{ $complaint->inquiry->I_Date ? \Carbon\Carbon::parse($complaint->inquiry->I_Date)->format('d M Y') : 'N/A' }}</p>
                         </div>
                         <div>
                             <p><strong>Submitted by:</strong> {{ $complaint->inquiry->publicUser->PU_Name ?? 'N/A' }}</p>

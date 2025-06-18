@@ -48,18 +48,18 @@ class Agency extends Authenticatable
     // Override the default username field
     public function getAuthIdentifierName()
     {
-        return 'A_Email';
+        return 'A_userName';
     }
 
     public function getAuthIdentifier()
     {
-        return $this->A_Email;
+        return $this->A_userName;
     }
 
     // Override the key name for sessions
     public function getKey()
     {
-        return $this->A_Email;
+        return $this->A_ID;
     }
 
     // Mutator to hash password

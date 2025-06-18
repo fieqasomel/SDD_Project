@@ -54,7 +54,7 @@ class ComplaintController extends Controller
         // Get statistics
         $stats = $this->getAssignmentStats();
         
-        return view('ManageAssignment.ManageAssignmentManageAssignments', compact('assignments', 'agencies', 'stats'));
+        return view('ManageAssignment.ManageAssignments', compact('assignments', 'agencies', 'stats'));
     }
 
     /**
@@ -347,44 +347,18 @@ class ComplaintController extends Controller
             'in_progress' => $allAssignments->filter(function($assignment) {
                 return $assignment->inquiry->I_Status === Inquiry::STATUS_IN_PROGRESS;
             })->count(),
+            'resolved' => $allAssignments->filter(function($assignment) {
+                return $assignment->inquiry->I_Status === Inquiry::STATUS_RESOLVED;
+            })->count(),
+            'closed' => $allAssignments->filter(function($assignment) {
+                return $assignment->inquiry->I_Status === Inquiry::STATUS_CLOSED;
+            })->count(),
             'this_month' => $allAssignments->filter(function($assignment) {
-                return $assignment->C_AssignedDate->isCurrentMonth();
-            })->count()
+                return Carbon::parse($assignment->C_AssignedDate)->isCurrentMonth();
+            })->count(),
         ];
         
         return $stats;
-    }
-
-    /**
-     * Determine user type
-     */
-    private function getUserType($user)
-    {
-        if (isset($user->M_ID)) {
-            return 'mcmc';
-        } elseif (isset($user->A_ID)) {
-            return 'agency';
-        } elseif (isset($user->PU_ID)) {
-            return 'publicuser';
-        }
-        
-        return null;
-    }
-
-    /**
-     * Check if user can view assignment
-     */
-    private function canViewAssignment($complaint, $user, $userType)
-    {
-        if ($userType === 'mcmc') {
-            return true; // MCMC users can view all assignments
-        } elseif ($userType === 'agency' && $complaint->A_ID === $user->A_ID) {
-            return true; // Agency can view their own assignments
-        } elseif ($userType === 'publicuser' && $complaint->inquiry->PU_ID === $user->PU_ID) {
-            return true; // Public user can view their own inquiries
-        }
-        
-        return false;
     }
 
     /**
@@ -406,18 +380,13 @@ class ComplaintController extends Controller
             return redirect()->route('assignments.index')->with('error', 'You can only verify inquiries assigned to your agency.');
         }
         
-        // Check if already verified
-        if ($complaint->C_VerificationStatus !== Complaint::VERIFICATION_PENDING) {
-            return redirect()->route('assignments.view', $complaintId)->with('error', 'This assignment has already been verified.');
-        }
-        
         return view('ManageAssignment.VerifyAssignment', compact('complaint'));
     }
 
     /**
-     * Update assignment verification
+     * Process verification (for agencies)
      */
-    public function updateVerification(Request $request, $complaintId)
+    public function processVerification(Request $request, $complaintId)
     {
         $user = Auth::user();
         $userType = $this->getUserType($user);
@@ -427,7 +396,7 @@ class ComplaintController extends Controller
         }
         
         $request->validate([
-            'verification' => 'required|in:accept,reject',
+            'verification' => 'required|string|in:accept,reject',
             'reason' => 'required_if:verification,reject|nullable|string|max:1000'
         ]);
         
@@ -436,11 +405,6 @@ class ComplaintController extends Controller
         // Check if this agency is assigned to this complaint
         if ($complaint->A_ID !== $user->A_ID) {
             return redirect()->route('assignments.index')->with('error', 'You can only verify inquiries assigned to your agency.');
-        }
-        
-        // Check if already verified
-        if ($complaint->C_VerificationStatus !== Complaint::VERIFICATION_PENDING) {
-            return redirect()->route('assignments.view', $complaintId)->with('error', 'This assignment has already been verified.');
         }
         
         DB::transaction(function () use ($complaint, $request, $user) {
@@ -461,15 +425,13 @@ class ComplaintController extends Controller
                     $user->A_ID,
                     'Agency'
                 );
-                
-                // TODO: Send notification to public user
             } else {
                 // Reject the assignment
                 $complaint->update([
                     'C_VerificationStatus' => Complaint::VERIFICATION_REJECTED,
-                    'C_RejectionReason' => $request->reason,
                     'C_VerificationDate' => Carbon::now()->toDateString(),
-                    'C_VerifiedBy' => $user->A_ID
+                    'C_VerifiedBy' => $user->A_ID,
+                    'C_RejectionReason' => $request->reason
                 ]);
                 
                 // Add history entry
@@ -478,17 +440,18 @@ class ComplaintController extends Controller
                     $user->A_ID,
                     'Agency'
                 );
-                
-                // TODO: Send notification to MCMC
             }
         });
         
-        $action = $request->verification === 'accept' ? 'accepted' : 'rejected';
-        return redirect()->route('assignments.view', $complaintId)->with('success', 'Assignment has been ' . $action . ' successfully.');
+        $message = $request->verification === 'accept' 
+            ? 'Assignment accepted successfully. You can now start working on this inquiry.' 
+            : 'Assignment rejected successfully. MCMC will be notified.';
+        
+        return redirect()->route('assignments.view', $complaintId)->with('success', $message);
     }
 
     /**
-     * Show rejected assignments
+     * View rejected assignments (MCMC only)
      */
     public function rejectedAssignments()
     {
@@ -499,11 +462,43 @@ class ComplaintController extends Controller
             return redirect()->route('assignments.index')->with('error', 'Only MCMC users can view rejected assignments.');
         }
         
-        $rejectedAssignments = Complaint::with(['inquiry.publicUser', 'agency', 'mcmc'])
-                                      ->rejected()
-                                      ->orderBy('C_VerificationDate', 'desc')
-                                      ->paginate(10);
+        $rejectedAssignments = Complaint::with(['inquiry.publicUser', 'agency'])
+            ->where('C_VerificationStatus', Complaint::VERIFICATION_REJECTED)
+            ->orderBy('C_VerificationDate', 'desc')
+            ->paginate(10);
         
         return view('ManageAssignment.RejectedAssignments', compact('rejectedAssignments'));
+    }
+
+    /**
+     * Get user type based on authenticated user
+     */
+    private function getUserType($user)
+    {
+        if ($user instanceof PublicUser) {
+            return 'public';
+        } elseif ($user instanceof Agency) {
+            return 'agency';
+        } elseif ($user instanceof MCMC) {
+            return 'mcmc';
+        }
+        
+        return 'unknown';
+    }
+
+    /**
+     * Check if user can view assignment
+     */
+    private function canViewAssignment($complaint, $user, $userType)
+    {
+        if ($userType === 'mcmc') {
+            return true; // MCMC can view all assignments
+        } elseif ($userType === 'agency' && $complaint->A_ID === $user->A_ID) {
+            return true; // Agency can view their own assignments
+        } elseif ($userType === 'public' && $complaint->inquiry->PU_ID === $user->PU_ID) {
+            return true; // Public user can view assignments related to their inquiries
+        }
+        
+        return false;
     }
 }

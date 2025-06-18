@@ -1,9 +1,15 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Edit Inquiry') }} - {{ $inquiry->I_ID }}
-        </h2>
-    </x-slot>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Inquiry - MySebenarnya System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -32,6 +38,14 @@
                 </h3>
             </div>
             <div class="p-6">
+                <!-- Display general errors -->
+                @if($errors->has('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                    <strong class="font-bold">Error!</strong>
+                    <span class="block sm:inline">{{ $errors->first('error') }}</span>
+                </div>
+                @endif
+
                 <form method="POST" action="{{ route('inquiries.update', $inquiry->I_ID) }}" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     @method('PUT')
@@ -131,6 +145,7 @@
                             @error('source')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+                        </div>
                         
                         <div>
                             <label for="attachment" class="block text-sm font-semibold text-gray-700 mb-2">Attachment</label>
@@ -143,13 +158,13 @@
                                 Upload new file to replace existing attachment (PDF, DOC, DOCX, JPG, PNG - Max 2MB)
                             </p>
                             
-                            @if($inquiry->I_filename && $inquiry->InfoPath)
+                            @if($inquiry->I_filename)
                                 <div class="mt-3 p-3 bg-blue-50 rounded-lg">
                                     <p class="text-sm font-semibold text-gray-700 mb-2">Current file:</p>
-                                    <a href="{{ Storage::url($inquiry->InfoPath) }}" 
+                                    <a href="{{ Storage::url($inquiry->I_filename) }}" 
                                        target="_blank" 
                                        class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
-                                        <i class="fas fa-download mr-2"></i>{{ $inquiry->I_filename }}
+                                        <i class="fas fa-download mr-2"></i>{{ basename($inquiry->I_filename) }}
                                     </a>
                                 </div>
                             @endif
@@ -164,7 +179,7 @@
                                 <h4 class="text-blue-800 font-semibold mb-2">Edit Information:</h4>
                                 <ul class="text-blue-700 space-y-1">
                                     <li>• Inquiry ID: <strong>{{ $inquiry->I_ID }}</strong> (cannot be changed)</li>
-                                    <li>• Date Submitted: <strong>{{ $inquiry->I_Date ? $inquiry->I_Date->format('F j, Y') : 'N/A' }}</strong> (cannot be changed)</li>
+                                    <li>• Date Submitted: <strong>{{ $inquiry->I_Date ? \Carbon\Carbon::parse($inquiry->I_Date)->format('F j, Y') : 'N/A' }}</strong> (cannot be changed)</li>
                                     @if(isset($statuses) && count($statuses) > 0)
                                         <li>• You can update the status of this inquiry</li>
                                     @endif
@@ -210,7 +225,7 @@
                         </div>
                         <div class="flex justify-between items-center py-2 border-b border-gray-100">
                             <span class="font-semibold text-gray-700">Date Submitted:</span>
-                            <span class="text-gray-900">{{ $inquiry->I_Date ? $inquiry->I_Date->format('F j, Y') : 'N/A' }}</span>
+                            <span class="text-gray-900">{{ $inquiry->I_Date ? \Carbon\Carbon::parse($inquiry->I_Date)->format('F j, Y') : 'N/A' }}</span>
                         </div>
                     </div>
                     <div class="space-y-4">
@@ -297,4 +312,5 @@
         });
     @endif
 </script>
-</x-app-layout>
+</body>
+</html>

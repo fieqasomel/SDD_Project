@@ -33,6 +33,15 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
+        // Custom authentication logic to use U_Email field
+        Fortify::authenticateUsing(function (Request $request) {
+            $user = \App\Models\User::where('U_Email', $request->email)->first();
+
+            if ($user && \Hash::check($request->password, $user->U_Password)) {
+                return $user;
+            }
+        });
+
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 

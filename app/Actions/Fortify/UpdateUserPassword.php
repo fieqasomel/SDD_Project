@@ -26,7 +26,7 @@ class UpdateUserPassword implements UpdatesUserPasswords
         ])->validateWithBag('updatePassword');
 
         $user->forceFill([
-            'password' => Hash::make($input['password']),
+            'U_Password' => Hash::make($input['password']),
         ])->save();
     }
 }

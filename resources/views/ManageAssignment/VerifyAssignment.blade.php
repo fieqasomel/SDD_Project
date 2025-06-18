@@ -63,7 +63,7 @@
                     <p class="text-sm text-gray-700"><strong>Submitted by:</strong> {{ $complaint->inquiry->publicUser->PU_Name ?? 'N/A' }}</p>
                     <p><strong>Email:</strong> {{ $complaint->inquiry->publicUser->PU_Email ?? 'N/A' }}</p>
                     <p><strong>Phone:</strong> {{ $complaint->inquiry->publicUser->PU_PhoneNum ?? 'N/A' }}</p>
-                    <p><strong>Submission Date:</strong> {{ $complaint->inquiry->I_Date->format('d M Y, H:i') }}</p>
+                    <p><strong>Submission Date:</strong> {{ $complaint->inquiry->I_Date ? \Carbon\Carbon::parse($complaint->inquiry->I_Date)->format('d M Y, H:i') : 'N/A' }}</p>
                     <p><strong>Source:</strong> {{ $complaint->inquiry->I_Source ?? 'Online Portal' }}</p>
                 </div>
             </div>

@@ -135,7 +135,7 @@
                         <div class="p-4 bg-white text-sm text-gray-700 space-y-2">
                             <p><strong>Category:</strong> <span class="inline-block bg-blue-500 text-white px-2 py-1 rounded text-xs">{{ $complaint->inquiry->I_Category }}</span></p>
                             <p><strong>Submitted by:</strong> {{ $complaint->inquiry->publicUser->PU_Name ?? 'N/A' }}</p>
-                            <p><strong>Submission Date:</strong> {{ $complaint->inquiry->I_Date->format('d M Y') }}</p>
+                            <p><strong>Submission Date:</strong> {{ $complaint->inquiry->I_Date ? \Carbon\Carbon::parse($complaint->inquiry->I_Date)->format('d M Y') : 'N/A' }}</p>
                             <p><strong>Source:</strong> {{ $complaint->inquiry->I_Source ?? 'N/A' }}</p>
                         </div>
                     </div>
