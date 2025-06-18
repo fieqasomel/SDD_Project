@@ -383,12 +383,12 @@
                         const cardTypes = ['public_user', 'agency', 'mcmc'];
                         const colors = ['blue', 'green', 'red'];
                         
-                        card.classList.remove(`border-${colors[0]}-500`, `bg-${colors[0]}-50`, 
-                                            `border-${colors[1]}-500`, `bg-${colors[1]}-50`,
-                                            `border-${colors[2]}-500`, `bg-${colors[2]}-50`);
+                        card.classList.remove(border-${colors[0]}-500, bg-${colors[0]}-50, 
+                                            border-${colors[1]}-500, bg-${colors[1]}-50,
+                                            border-${colors[2]}-500, bg-${colors[2]}-50);
                         
                         if (cardTypes[index] === userType) {
-                            card.classList.add(`border-${colors[index]}-500`, `bg-${colors[index]}-50`, 'shadow-lg');
+                            card.classList.add(border-${colors[index]}-500, bg-${colors[index]}-50, 'shadow-lg');
                         } else {
                             card.classList.add('border-gray-200', 'bg-white');
                         }
@@ -411,12 +411,9 @@
 
         // Add loading state to form submission
         document.querySelector('form').addEventListener('submit', function(e) {
-            console.log('Form submitted!'); // Debug log
             const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Signing In...';
-                submitBtn.disabled = true;
-            }
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Signing In...';
+            submitBtn.disabled = true;
         });
     </script>
 </body>

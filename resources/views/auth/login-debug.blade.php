@@ -3,31 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Debug Login - SDD System</title>
+    <title>Debug Login - MySebenarnya System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
         .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        input, select { padding: 12px; width: 100%; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
+        input:focus, select:focus { border-color: #007bff; outline: none; }
+        button { padding: 15px 30px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; }
         button:hover { background: #0056b3; }
-        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
-        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
-        .debug { background: #e2e3e5; padding: 15px; border-radius: 5px; margin-top: 20px; font-size: 12px; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .error { color: red; margin-top: 10px; padding: 10px; background: #ffe6e6; border-radius: 4px; }
+        .success { color: green; margin-top: 10px; padding: 10px; background: #e6ffe6; border-radius: 4px; }
+        .user-type-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .user-type-btn { flex: 1; padding: 10px; border: 2px solid #ddd; background: white; cursor: pointer; border-radius: 6px; text-align: center; }
+        .user-type-btn.active { border-color: #007bff; background: #e7f3ff; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Debug Login Form</h2>
+        <h1 style="text-align: center; color: #333; margin-bottom: 30px;">
+            <i class="fas fa-shield-halved"></i> Login Debug
+        </h1>
         
-        @if (session('success'))
-            <div class="success">{{ session('success') }}</div>
-        @endif
-
         @if ($errors->any())
             <div class="error">
-                <ul style="margin: 0; padding-left: 20px;">
+                <strong>Errors:</strong>
+                <ul style="margin: 10px 0 0 20px;">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -35,89 +41,126 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}" id="debugForm">
+        @if (session('success'))
+            <div class="success">{{ session('success') }}</div>
+        @endif
+
+        <form method="POST" action="{{ route('login') }}" id="loginForm">
             @csrf
             
+            <!-- User Type Selection -->
             <div class="form-group">
-                <label for="user_type">User Type:</label>
-                <select name="user_type" id="user_type" required onchange="toggleFields()">
-                    <option value="public_user" {{ old('user_type') == 'public_user' ? 'selected' : '' }}>Public User</option>
-                    <option value="agency" {{ old('user_type') == 'agency' ? 'selected' : '' }}>Agency</option>
-                    <option value="mcmc" {{ old('user_type') == 'mcmc' ? 'selected' : '' }}>MCMC</option>
-                </select>
-            </div>
-
-            <div class="form-group" id="email_group">
-                <label for="email">Email:</label>
-                <input type="email" name="email" id="email" value="{{ old('email') }}" placeholder="Enter email">
+                <label>Select Account Type:</label>
+                <div class="user-type-selector">
+                    <div class="user-type-btn active" onclick="selectUserType('public_user')">
+                        <i class="fas fa-user-circle"></i><br>Public User
+                    </div>
+                    <div class="user-type-btn" onclick="selectUserType('agency')">
+                        <i class="fas fa-building"></i><br>Agency
+                    </div>
+                    <div class="user-type-btn" onclick="selectUserType('mcmc')">
+                        <i class="fas fa-shield-alt"></i><br>MCMC
+                    </div>
+                </div>
+                <input type="hidden" name="user_type" id="userType" value="public_user">
             </div>
             
-            <div class="form-group" id="username_group" style="display: none;">
+            <!-- Email Field (Public Users) -->
+            <div class="form-group" id="emailField">
+                <label for="email">Email Address:</label>
+                <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="your.email@example.com">
+            </div>
+            
+            <!-- Username Field (Agency & MCMC) -->
+            <div class="form-group hidden" id="usernameField">
                 <label for="username">Username:</label>
-                <input type="text" name="username" id="username" value="{{ old('username') }}" placeholder="Enter username">
+                <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Enter your username">
             </div>
 
+            <!-- Password Field -->
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" name="password" id="password" required placeholder="Enter password">
+                <div style="position: relative;">
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    <button type="button" onclick="togglePassword()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #666; width: auto; padding: 5px;">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
             </div>
-
-            <button type="submit" onclick="console.log('Button clicked!'); return true;">
-                LOGIN
+            
+            <button type="submit" id="submitBtn">
+                <i class="fas fa-sign-in-alt"></i> Login
             </button>
         </form>
-
-        <div class="debug">
-            <h4>Test Credentials:</h4>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 6px;">
+            <h3>Test Credentials:</h3>
             <p><strong>MCMC:</strong> Username: MCMC, Password: password123</p>
-            <p><strong>Agency:</strong> Username: testuser, Password: password123</p>
-            <p><strong>Public:</strong> Email: test@example.com, Password: password123</p>
-            
-            <h4>Debug Info:</h4>
-            <p>CSRF Token: {{ csrf_token() }}</p>
-            <p>Form Action: {{ route('login') }}</p>
-            <p>Old Input: {{ json_encode(old()) }}</p>
+            <p><strong>Agency:</strong> Username: BOMBA, Password: password123</p>
+            <p><strong>Public:</strong> Email: AFIQAH@gmail.com, Password: password123</p>
         </div>
     </div>
 
     <script>
-        function toggleFields() {
-            const userType = document.getElementById('user_type').value;
-            const emailGroup = document.getElementById('email_group');
-            const usernameGroup = document.getElementById('username_group');
+        function selectUserType(type) {
+            // Update hidden input
+            document.getElementById('userType').value = type;
+            
+            // Update button styles
+            document.querySelectorAll('.user-type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.user-type-btn').classList.add('active');
+            
+            // Show/hide fields
+            const emailField = document.getElementById('emailField');
+            const usernameField = document.getElementById('usernameField');
             const emailInput = document.getElementById('email');
             const usernameInput = document.getElementById('username');
             
-            console.log('User type changed to:', userType);
-            
-            if (userType === 'public_user') {
-                emailGroup.style.display = 'block';
-                usernameGroup.style.display = 'none';
+            if (type === 'public_user') {
+                emailField.classList.remove('hidden');
+                usernameField.classList.add('hidden');
                 emailInput.required = true;
                 usernameInput.required = false;
             } else {
-                emailGroup.style.display = 'none';
-                usernameGroup.style.display = 'block';
+                emailField.classList.add('hidden');
+                usernameField.classList.remove('hidden');
                 emailInput.required = false;
                 usernameInput.required = true;
             }
         }
         
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded');
-            toggleFields();
+        function togglePassword() {
+            const passwordField = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
             
-            // Add form submit listener
-            document.getElementById('debugForm').addEventListener('submit', function(e) {
-                console.log('Form submitted!');
-                console.log('User type:', document.getElementById('user_type').value);
-                console.log('Email:', document.getElementById('email').value);
-                console.log('Username:', document.getElementById('username').value);
-                console.log('Password length:', document.getElementById('password').value.length);
-                // Don't prevent default - let form submit
-            });
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+        
+        // Form submission handler
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+            submitBtn.disabled = true;
+            
+            // Re-enable button after 5 seconds in case of error
+            setTimeout(() => {
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                submitBtn.disabled = false;
+            }, 5000);
         });
+        
+        // Initialize form
+        selectUserType('public_user');
     </script>
 </body>
 </html>

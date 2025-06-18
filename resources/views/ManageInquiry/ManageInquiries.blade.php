@@ -8,18 +8,34 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">My Inquiries</h1>
-                <p class="text-gray-600">View and manage your inquiry submissions</p>
+                @if(Auth::user() instanceof \App\Models\Agency)
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Assigned Inquiries</h1>
+                    <p class="text-gray-600">View and manage inquiries assigned to your agency with complete history tracking</p>
+                @else
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">My Inquiries</h1>
+                    <p class="text-gray-600">View and manage your inquiry submissions</p>
+                @endif
             </div>
             <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
-                <a href="{{ route('inquiries.public') }}" 
-                   class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                    <i class="fas fa-globe mr-2"></i>Public Inquiries
-                </a>
-                <a href="{{ route('inquiries.create') }}" 
-                   class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                    <i class="fas fa-plus mr-2"></i>New Inquiry
-                </a>
+                @if(Auth::user() instanceof \App\Models\Agency)
+                    <a href="{{ route('assignments.index') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-tasks mr-2"></i>Current Assignments
+                    </a>
+                    <a href="{{ route('assignments.report') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-chart-bar mr-2"></i>Generate Report
+                    </a>
+                @else
+                    <a href="{{ route('inquiries.public') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-globe mr-2"></i>Public Inquiries
+                    </a>
+                    <a href="{{ route('inquiries.create') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-plus mr-2"></i>New Inquiry
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -100,6 +116,63 @@
             </div>
         </div>
 
+        @if(Auth::user() instanceof \App\Models\Agency)
+        <!-- Additional Agency Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Verified True -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-emerald-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-emerald-600 uppercase tracking-wide mb-1">Verified True</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $stats['verified_true'] ?? 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-emerald-100 rounded-full">
+                        <i class="fas fa-check-double text-2xl text-emerald-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Identified Fake -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-red-600 uppercase tracking-wide mb-1">Identified Fake</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $stats['identified_fake'] ?? 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-red-100 rounded-full">
+                        <i class="fas fa-times-circle text-2xl text-red-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rejected -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-gray-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Rejected</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $stats['rejected'] ?? 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-gray-100 rounded-full">
+                        <i class="fas fa-ban text-2xl text-gray-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Closed -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-purple-600 uppercase tracking-wide mb-1">Closed</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ $stats['closed'] ?? 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-purple-100 rounded-full">
+                        <i class="fas fa-archive text-2xl text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Search & Filter -->
         <div class="bg-white rounded-2xl shadow-lg mb-6">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -109,7 +182,7 @@
             </div>
             <div class="p-6">
                 <form method="GET" action="{{ route('inquiries.index') }}" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                         <!-- Search Text -->
                         <div>
                             <label for="search" class="block text-sm font-medium text-gray-700 mb-1">
@@ -156,8 +229,38 @@
                                 <option value="Resolved" {{ request('status') == 'Resolved' ? 'selected' : '' }}>Resolved</option>
                                 <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }}>Closed</option>
                                 <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>Rejected</option>
+                                @if(Auth::user() instanceof \App\Models\Agency)
+                                    <option value="Verified as True" {{ request('status') == 'Verified as True' ? 'selected' : '' }}>Verified as True</option>
+                                    <option value="Identified as Fake" {{ request('status') == 'Identified as Fake' ? 'selected' : '' }}>Identified as Fake</option>
+                                @endif
                             </select>
                         </div>
+
+                        @if(Auth::user() instanceof \App\Models\Agency)
+                        <!-- Date From -->
+                        <div>
+                            <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-calendar mr-1"></i>Date From
+                            </label>
+                            <input type="date" 
+                                   id="date_from" 
+                                   name="date_from" 
+                                   value="{{ request('date_from') }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        </div>
+
+                        <!-- Date To -->
+                        <div>
+                            <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-calendar mr-1"></i>Date To
+                            </label>
+                            <input type="date" 
+                                   id="date_to" 
+                                   name="date_to" 
+                                   value="{{ request('date_to') }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        </div>
+                        @endif
 
                         <!-- Search Button -->
                         <div class="flex items-end">
@@ -238,9 +341,16 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                    @if(Auth::user() instanceof \App\Models\Agency)
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    @endif
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    @if(Auth::user() instanceof \App\Models\Agency)
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Date</th>
+                                    @else
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    @endif
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -249,6 +359,14 @@
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $inquiry->I_ID }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ $inquiry->I_Title }}</td>
+                                        @if(Auth::user() instanceof \App\Models\Agency)
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <div>
+                                                    <div class="font-medium">{{ $inquiry->publicUser->PU_Name ?? 'N/A' }}</div>
+                                                    <div class="text-gray-500">{{ $inquiry->publicUser->PU_Email ?? 'N/A' }}</div>
+                                                </div>
+                                            </td>
+                                        @endif
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Category }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php

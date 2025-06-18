@@ -117,6 +117,96 @@
             </div>
         </div>
 
+        <!-- MCMC Filter Section -->
+        <div class="bg-white rounded-2xl shadow-lg mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-filter mr-2 text-green-600"></i>MCMC Filter & Validation
+                </h3>
+            </div>
+            <div class="p-6">
+                <form method="GET" action="{{ route('inquiries.search') }}" class="space-y-4">
+                    <!-- Preserve existing search parameters -->
+                    @if(request('search'))
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                    @endif
+                    @if(request('category'))
+                        <input type="hidden" name="category" value="{{ request('category') }}">
+                    @endif
+                    @if(request('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+                    @if(request('date_from'))
+                        <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+                    @endif
+                    @if(request('date_to'))
+                        <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+                    @endif
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Priority Filter -->
+                        <div>
+                            <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>Priority Level
+                            </label>
+                            <select id="priority" 
+                                    name="priority"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                                <option value="">All Priorities</option>
+                                <option value="high" {{ request('priority') == 'high' ? 'selected' : '' }}>High Priority</option>
+                                <option value="medium" {{ request('priority') == 'medium' ? 'selected' : '' }}>Medium Priority</option>
+                                <option value="low" {{ request('priority') == 'low' ? 'selected' : '' }}>Low Priority</option>
+                            </select>
+                        </div>
+
+                        <!-- Validation Status -->
+                        <div>
+                            <label for="validation_status" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-check-circle mr-1"></i>Validation Status
+                            </label>
+                            <select id="validation_status" 
+                                    name="validation_status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                                <option value="">All Status</option>
+                                <option value="pending" {{ request('validation_status') == 'pending' ? 'selected' : '' }}>Pending Validation</option>
+                                <option value="validated" {{ request('validation_status') == 'validated' ? 'selected' : '' }}>Validated</option>
+                                <option value="rejected" {{ request('validation_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            </select>
+                        </div>
+
+                        <!-- Attachment Filter -->
+                        <div>
+                            <label for="has_attachment" class="block text-sm font-medium text-gray-700 mb-1">
+                                <i class="fas fa-paperclip mr-1"></i>Attachment
+                            </label>
+                            <select id="has_attachment" 
+                                    name="has_attachment"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                                <option value="">All Inquiries</option>
+                                <option value="yes" {{ request('has_attachment') == 'yes' ? 'selected' : '' }}>With Attachment</option>
+                                <option value="no" {{ request('has_attachment') == 'no' ? 'selected' : '' }}>Without Attachment</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter Actions -->
+                        <div class="flex items-end">
+                            <div class="flex gap-2 w-full">
+                                <button type="submit" 
+                                        class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 text-sm">
+                                    <i class="fas fa-filter mr-1"></i>Apply Filter
+                                </button>
+                                <a href="{{ route('inquiries.search') }}" 
+                                   class="inline-flex items-center px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg shadow hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 text-sm"
+                                   title="Clear MCMC filters">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Search Results -->
         <div class="bg-white rounded-2xl shadow-lg">
             <div class="px-6 py-4 border-b border-gray-200">

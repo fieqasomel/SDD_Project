@@ -198,7 +198,7 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 mb-3">Pending Inquiries</h3>
                 <p class="text-gray-600 mb-6 leading-relaxed">View all pending inquiries awaiting assignment</p>
-                <a href="{{ route('inquiries.index', ['status' => 'Pending']) }}" class="btn-danger inline-block">View Pending</a>
+                <a href="{{ route('mcmc.inquiries.new') }}" class="btn-danger inline-block">View New Inquiries</a>
             </div>
         </div>
 
@@ -236,8 +236,8 @@
             <h3 class="text-xl font-bold text-gray-800">Quick Actions</h3>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <a href="{{ route('inquiries.index', ['status' => 'Pending']) }}" class="flex items-center justify-center px-4 py-3 border-2 border-red-200 text-red-600 font-semibold rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200">
-                <i class="fas fa-clock mr-2"></i>View Pending
+            <a href="{{ route('mcmc.inquiries.new') }}" class="flex items-center justify-center px-4 py-3 border-2 border-red-200 text-red-600 font-semibold rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200">
+                <i class="fas fa-inbox mr-2"></i>New Inquiries
             </a>
             <a href="{{ route('assignments.index') }}" class="flex items-center justify-center px-4 py-3 border-2 border-red-200 text-red-600 font-semibold rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200">
                 <i class="fas fa-tasks mr-2"></i>Assignments

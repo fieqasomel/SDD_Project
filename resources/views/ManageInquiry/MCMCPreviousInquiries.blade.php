@@ -12,15 +12,15 @@
                 <p class="text-gray-600">View all previously filtered inquiries with secure audit trail</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
-                <a href="{{ route('inquiries.mcmc.new') }}" 
+                <a href="{{ route('mcmc.inquiries.new') }}" 
                    class="inline-flex items-center px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                     <i class="fas fa-inbox mr-2"></i>New Inquiries
                 </a>
-                <a href="{{ route('inquiries.mcmc.audit') }}" 
+                <a href="{{ route('mcmc.inquiry-activity.index') }}" 
                    class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                     <i class="fas fa-clipboard-list mr-2"></i>Audit Log
                 </a>
-                <a href="{{ route('inquiries.mcmc.report') }}" 
+                <a href="{{ route('mcmc.inquiry-reports.generate') }}" 
                    class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                     <i class="fas fa-chart-bar mr-2"></i>Generate Report
                 </a>
@@ -50,7 +50,7 @@
                 </h3>
             </div>
             <div class="p-6">
-                <form method="GET" action="{{ route('inquiries.mcmc.previous') }}" class="space-y-4">
+                <form method="GET" action="{{ route('mcmc.inquiries.processed') }}" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                         <!-- Search Text -->
                         <div>

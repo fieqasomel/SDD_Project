@@ -19,11 +19,17 @@ class InquiryController extends Controller
             // Initialize query
             $query = Inquiry::query();
             
-            // If user is authenticated, filter by user
+            // Handle different user types
             if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                // Public users see their own inquiries
                 $query->where('PU_ID', Auth::user()->PU_ID);
+            } elseif (Auth::check() && Auth::user() instanceof \App\Models\Agency) {
+                // Agencies see inquiries assigned to them through complaints
+                $query->whereHas('complaints', function($q) {
+                    $q->where('A_ID', Auth::user()->A_ID);
+                });
             } else {
-                // If not authenticated or not a public user, return empty
+                // If not authenticated or not a recognized user type, return empty
                 return view('ManageInquiry.ManageInquiries', [
                     'inquiries' => collect([]),
                     'stats' => [
@@ -55,17 +61,36 @@ class InquiryController extends Controller
                 $query->where('I_Status', $request->status);
             }
 
+            // Date range filtering for agencies
+            if (Auth::user() instanceof \App\Models\Agency && $request->filled('date_from') && $request->filled('date_to')) {
+                $query->whereHas('complaints', function($q) use ($request) {
+                    $q->whereBetween('C_AssignedDate', [$request->date_from, $request->date_to]);
+                });
+            }
+
             // Get inquiries
             $inquiries = $query->orderBy('I_Date', 'desc')->get();
             
             // Calculate statistics (for all user's inquiries, not just filtered)
-            $allInquiries = Inquiry::where('PU_ID', Auth::user()->PU_ID)->get();
+            if (Auth::user() instanceof \App\Models\PublicUser) {
+                $allInquiries = Inquiry::where('PU_ID', Auth::user()->PU_ID)->get();
+            } elseif (Auth::user() instanceof \App\Models\Agency) {
+                $allInquiries = Inquiry::whereHas('complaints', function($q) {
+                    $q->where('A_ID', Auth::user()->A_ID);
+                })->get();
+            } else {
+                $allInquiries = collect([]);
+            }
+            
             $stats = [
                 'total' => $allInquiries->count(),
                 'pending' => $allInquiries->where('I_Status', 'Pending')->count(),
                 'in_progress' => $allInquiries->where('I_Status', 'In Progress')->count(),
                 'resolved' => $allInquiries->where('I_Status', 'Resolved')->count(),
-                'closed' => $allInquiries->where('I_Status', 'Closed')->count()
+                'closed' => $allInquiries->where('I_Status', 'Closed')->count(),
+                'verified_true' => $allInquiries->where('I_Status', 'Verified as True')->count(),
+                'identified_fake' => $allInquiries->where('I_Status', 'Identified as Fake')->count(),
+                'rejected' => $allInquiries->where('I_Status', 'Rejected')->count()
             ];
             
             return view('ManageInquiry.ManageInquiries', [
@@ -193,14 +218,19 @@ class InquiryController extends Controller
                 return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
             }
             
-            // Check if user owns this inquiry (for security)
-            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+            // Check user type and permissions
+            if (Auth::guard('mcmc')->check()) {
+                // MCMC staff can view any inquiry for filtering/validation
+                return view('ManageInquiry.MCMCFilterInquiry', compact('inquiry'));
+            } elseif (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
+                // Public users can only view their own inquiries
                 if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
                     return redirect()->route('inquiries.index')->with('error', 'You are not authorized to view this inquiry.');
                 }
+                return view('ManageInquiry.ViewInquiryDetails', compact('inquiry'));
+            } else {
+                return redirect()->route('login')->with('error', 'Please login to view inquiries.');
             }
-            
-            return view('ManageInquiry.ViewInquiryDetails', compact('inquiry'));
             
         } catch (\Exception $e) {
             \Log::error('Error viewing inquiry: ' . $e->getMessage());
@@ -279,55 +309,17 @@ class InquiryController extends Controller
                 return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
             }
             
-            // Check if user owns this inquiry (for security)
+            // Handle MCMC validation/filtering
+            if (Auth::guard('mcmc')->check()) {
+                return $this->handleMCMCValidation($request, $inquiry);
+            }
+            
+            // Handle Public User updates
             if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
-                if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
-                    return redirect()->route('inquiries.index')->with('error', 'You are not authorized to update this inquiry.');
-                }
+                return $this->handlePublicUserUpdate($request, $inquiry, $id);
             }
             
-            // Check if inquiry can be updated (only pending inquiries can be updated)
-            if ($inquiry->I_Status !== 'Pending') {
-                return redirect()->route('inquiries.index')->with('error', 'Only pending inquiries can be updated.');
-            }
-            
-            // Validate the request
-            $validatedData = $request->validate([
-                'title' => 'required|string|max:255',
-                'category' => 'required|string',
-                'description' => 'required|string|max:1000',
-                'source' => 'nullable|string|max:255',
-                'attachment' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
-            ]);
-            
-            // Handle file upload if present
-            $attachmentPath = $inquiry->I_filename; // Keep existing attachment by default
-            if ($request->hasFile('attachment')) {
-                // Delete old file if exists
-                if ($inquiry->I_filename && \Storage::disk('public')->exists($inquiry->I_filename)) {
-                    \Storage::disk('public')->delete($inquiry->I_filename);
-                }
-                
-                // Upload new file
-                $file = $request->file('attachment');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $attachmentPath = $file->storeAs('inquiries', $fileName, 'public');
-            }
-            
-            // Update the inquiry
-            $inquiry->I_Title = $validatedData['title'];
-            $inquiry->I_Category = $validatedData['category'];
-            $inquiry->I_Description = $validatedData['description'];
-            $inquiry->I_Source = $validatedData['source'] ?? null;
-            $inquiry->I_filename = $attachmentPath;
-            $inquiry->save();
-            
-            \Log::info('Inquiry updated successfully', [
-                'inquiry_id' => $id,
-                'user_id' => Auth::user()->PU_ID ?? 'N/A'
-            ]);
-            
-            return redirect()->route('inquiries.index')->with('success', 'Inquiry updated successfully.');
+            return redirect()->route('login')->with('error', 'Please login to update inquiries.');
             
         } catch (\Exception $e) {
             \Log::error('Error updating inquiry: ' . $e->getMessage());
@@ -335,6 +327,251 @@ class InquiryController extends Controller
                 ->withErrors(['error' => 'There was an error updating your inquiry. Please try again.'])
                 ->withInput();
         }
+    }
+
+    /**
+     * Handle MCMC validation/filtering of inquiries
+     */
+    private function handleMCMCValidation(Request $request, $inquiry)
+    {
+        // Validate MCMC input
+        $validatedData = $request->validate([
+            'status' => 'required|in:Validated,Rejected,Non-Serious',
+            'mcmc_notes' => 'required|string|max:1000',
+            'priority_level' => 'required|in:Low,Medium,High,Critical',
+            'is_serious' => 'required|boolean'
+        ]);
+
+        $mcmcUser = Auth::guard('mcmc')->user();
+
+        // Update inquiry with MCMC validation
+        $inquiry->update([
+            'I_Status' => $validatedData['status'],
+            'processed_by' => $mcmcUser->M_ID,
+            'processed_date' => now(),
+            'mcmc_notes' => $validatedData['mcmc_notes'],
+            'priority_level' => $validatedData['priority_level'],
+            'is_serious' => $validatedData['is_serious']
+        ]);
+
+        // Log MCMC activity
+        $this->logMCMCActivity($mcmcUser->M_ID, 'validate_inquiry', 
+            "Validated inquiry {$inquiry->I_ID} with status: {$validatedData['status']}");
+
+        $message = $validatedData['status'] === 'Validated' ? 
+            'Inquiry validated successfully!' : 'Inquiry processed successfully!';
+        
+        return redirect()->route('mcmc.inquiries.new')->with('success', $message);
+    }
+
+    /**
+     * Handle Public User inquiry updates
+     */
+    private function handlePublicUserUpdate(Request $request, $inquiry, $id)
+    {
+        // Check if user owns this inquiry
+        if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
+            return redirect()->route('inquiries.index')->with('error', 'You are not authorized to update this inquiry.');
+        }
+        
+        // Check if inquiry can be updated (only pending inquiries)
+        if ($inquiry->I_Status !== 'Pending') {
+            return redirect()->route('inquiries.index')->with('error', 'Only pending inquiries can be updated.');
+        }
+        
+        // Validate the request
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'category' => 'required|string',
+            'description' => 'required|string|max:1000',
+            'source' => 'nullable|string|max:255',
+            'attachment' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
+        ]);
+        
+        // Handle file upload if present
+        $attachmentPath = $inquiry->I_filename;
+        if ($request->hasFile('attachment')) {
+            // Delete old file if exists
+            if ($inquiry->I_filename && \Storage::disk('public')->exists($inquiry->I_filename)) {
+                \Storage::disk('public')->delete($inquiry->I_filename);
+            }
+            
+            // Upload new file
+            $file = $request->file('attachment');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $attachmentPath = $file->storeAs('inquiries', $fileName, 'public');
+        }
+        
+        // Update the inquiry
+        $inquiry->I_Title = $validatedData['title'];
+        $inquiry->I_Category = $validatedData['category'];
+        $inquiry->I_Description = $validatedData['description'];
+        $inquiry->I_Source = $validatedData['source'] ?? null;
+        $inquiry->I_filename = $attachmentPath;
+        $inquiry->save();
+        
+        \Log::info('Inquiry updated successfully', [
+            'inquiry_id' => $id,
+            'user_id' => Auth::user()->PU_ID ?? 'N/A'
+        ]);
+        
+        return redirect()->route('inquiries.index')->with('success', 'Inquiry updated successfully.');
+    }
+
+    /**
+     * Log MCMC activity for audit trail
+     */
+    private function logMCMCActivity($mcmcId, $action, $description)
+    {
+        try {
+            \DB::table('activity_logs')->insert([
+                'user_id' => $mcmcId,
+                'user_type' => 'MCMC',
+                'action' => $action,
+                'description' => $description,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to log MCMC activity: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle MCMC deletion (soft delete with audit trail)
+     */
+    private function handleMCMCDeletion($inquiry)
+    {
+        $mcmcUser = Auth::guard('mcmc')->user();
+        
+        // Mark as deleted by MCMC instead of hard delete
+        $inquiry->update([
+            'I_Status' => 'Deleted by MCMC',
+            'processed_by' => $mcmcUser->M_ID,
+            'processed_date' => now(),
+            'mcmc_notes' => 'Inquiry deleted by MCMC staff - Non-serious/Invalid submission'
+        ]);
+        
+        // Log MCMC activity
+        $this->logMCMCActivity($mcmcUser->M_ID, 'delete_inquiry', 
+            "Deleted inquiry {$inquiry->I_ID} - marked as non-serious/invalid");
+        
+        return redirect()->route('mcmc.inquiries.new')->with('success', 'Inquiry marked as deleted successfully.');
+    }
+
+    /**
+     * Handle Public User deletion
+     */
+    private function handlePublicUserDeletion($inquiry, $id)
+    {
+        // Check if user owns this inquiry
+        if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
+            return redirect()->route('inquiries.index')->with('error', 'You are not authorized to delete this inquiry.');
+        }
+        
+        // Check if inquiry can be deleted (only pending inquiries)
+        if ($inquiry->I_Status !== 'Pending') {
+            return redirect()->route('inquiries.index')->with('error', 'Only pending inquiries can be deleted.');
+        }
+        
+        // Delete attachment file if exists
+        if ($inquiry->I_filename && \Storage::disk('public')->exists($inquiry->I_filename)) {
+            \Storage::disk('public')->delete($inquiry->I_filename);
+        }
+        
+        // Delete the inquiry
+        $inquiryTitle = $inquiry->I_Title;
+        $inquiry->delete();
+        
+        \Log::info('Inquiry deleted successfully', [
+            'inquiry_id' => $id,
+            'inquiry_title' => $inquiryTitle,
+            'user_id' => Auth::user()->PU_ID ?? 'N/A'
+        ]);
+        
+        return redirect()->route('inquiries.index')->with('success', 'Inquiry "' . $inquiryTitle . '" deleted successfully.');
+    }
+
+    /**
+     * MCMC: View new inquiries for filtering
+     */
+    public function mcmcNewInquiries(Request $request)
+    {
+        if (!Auth::guard('mcmc')->check()) {
+            return redirect()->route('login')->with('error', 'MCMC access required.');
+        }
+
+        $query = Inquiry::with(['publicUser'])
+            ->where('I_Status', 'Pending')
+            ->whereNull('processed_by');
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('I_Title', 'like', '%' . $request->search . '%')
+                  ->orWhere('I_Description', 'like', '%' . $request->search . '%')
+                  ->orWhere('I_ID', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('category')) {
+            $query->where('I_Category', $request->category);
+        }
+
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $query->whereBetween('I_Date', [$request->date_from, $request->date_to]);
+        }
+
+        $inquiries = $query->orderBy('I_Date', 'desc')->paginate(15);
+        
+        $stats = [
+            'total_new' => Inquiry::where('I_Status', 'Pending')->whereNull('processed_by')->count(),
+            'today_new' => Inquiry::where('I_Status', 'Pending')->whereNull('processed_by')->whereDate('I_Date', today())->count(),
+            'this_week' => Inquiry::where('I_Status', 'Pending')->whereNull('processed_by')->whereBetween('I_Date', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+        ];
+
+        return view('ManageInquiry.MCMCNewInquiries', compact('inquiries', 'stats'));
+    }
+
+    /**
+     * MCMC: View processed inquiries
+     */
+    public function mcmcProcessedInquiries(Request $request)
+    {
+        if (!Auth::guard('mcmc')->check()) {
+            return redirect()->route('login')->with('error', 'MCMC access required.');
+        }
+
+        $query = Inquiry::with(['publicUser', 'processor'])
+            ->whereNotNull('processed_by')
+            ->whereNotIn('I_Status', ['Pending']);
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('I_Title', 'like', '%' . $request->search . '%')
+                  ->orWhere('I_Description', 'like', '%' . $request->search . '%')
+                  ->orWhere('I_ID', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('I_Status', $request->status);
+        }
+
+        if ($request->filled('category')) {
+            $query->where('I_Category', $request->category);
+        }
+
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $query->whereBetween('processed_date', [$request->date_from, $request->date_to]);
+        }
+
+        $inquiries = $query->orderBy('processed_date', 'desc')->paginate(15);
+
+        return view('ManageInquiry.MCMCPreviousInquiries', compact('inquiries'));
     }
 
     /**
@@ -351,34 +588,17 @@ class InquiryController extends Controller
                 return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
             }
             
-            // Check if user owns this inquiry (for security)
+            // Handle MCMC deletion (soft delete with audit trail)
+            if (Auth::guard('mcmc')->check()) {
+                return $this->handleMCMCDeletion($inquiry);
+            }
+            
+            // Handle Public User deletion
             if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
-                if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
-                    return redirect()->route('inquiries.index')->with('error', 'You are not authorized to delete this inquiry.');
-                }
+                return $this->handlePublicUserDeletion($inquiry, $id);
             }
             
-            // Check if inquiry can be deleted (only pending inquiries can be deleted)
-            if ($inquiry->I_Status !== 'Pending') {
-                return redirect()->route('inquiries.index')->with('error', 'Only pending inquiries can be deleted.');
-            }
-            
-            // Delete attachment file if exists
-            if ($inquiry->I_filename && \Storage::disk('public')->exists($inquiry->I_filename)) {
-                \Storage::disk('public')->delete($inquiry->I_filename);
-            }
-            
-            // Delete the inquiry
-            $inquiryTitle = $inquiry->I_Title;
-            $inquiry->delete();
-            
-            \Log::info('Inquiry deleted successfully', [
-                'inquiry_id' => $id,
-                'inquiry_title' => $inquiryTitle,
-                'user_id' => Auth::user()->PU_ID ?? 'N/A'
-            ]);
-            
-            return redirect()->route('inquiries.index')->with('success', 'Inquiry "' . $inquiryTitle . '" deleted successfully.');
+            return redirect()->route('login')->with('error', 'Please login to delete inquiries.');
             
         } catch (\Exception $e) {
             \Log::error('Error deleting inquiry: ' . $e->getMessage());
@@ -588,7 +808,6 @@ class InquiryController extends Controller
     }
 
     /**
-<<<<<<< HEAD
      * MCMC Staff - View New Inquiries
      * Display newly submitted inquiries for MCMC staff review
      */
@@ -958,8 +1177,6 @@ class InquiryController extends Controller
     }
 
     /**
-=======
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
      * Get the type of the authenticated user
      */
     private function getUserType()
