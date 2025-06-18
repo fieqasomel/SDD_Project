@@ -138,7 +138,7 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 mb-3">Inquiry Management</h3>
                 <p class="text-gray-600 mb-6 leading-relaxed">View, manage, and track all system inquiries</p>
-                <a href="{{ route('inquiries.index') }}" class="btn-danger inline-block">Manage Inquiries</a>
+                <a href="{{ route('mcmc.inquiries.new') }}" class="btn-danger inline-block">New Inquiries</a>
             </div>
         </div>
 
@@ -174,7 +174,7 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-800 mb-3">Agency Overview</h3>
                 <p class="text-gray-600 mb-6 leading-relaxed">View all registered agencies and their categories</p>
-                <a href="{{ route('inquiries.index', ['category' => '']) }}" class="btn-danger inline-block">View Agencies</a>
+                <a href="{{ route('mcmc.agencies.index') }}" class="btn-danger inline-block">View Agencies</a>
             </div>
         </div>
 

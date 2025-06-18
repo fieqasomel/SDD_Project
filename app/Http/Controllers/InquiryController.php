@@ -28,6 +28,9 @@ class InquiryController extends Controller
                 $query->whereHas('complaints', function($q) {
                     $q->where('A_ID', Auth::user()->A_ID);
                 });
+            } elseif (Auth::guard('mcmc')->check()) {
+                // MCMC users should be redirected to their specific inquiry management
+                return redirect()->route('mcmc.inquiries.new')->with('info', 'Redirected to MCMC inquiry management.');
             } else {
                 // If not authenticated or not a recognized user type, return empty
                 return view('ManageInquiry.ManageInquiries', [
@@ -78,6 +81,9 @@ class InquiryController extends Controller
                 $allInquiries = Inquiry::whereHas('complaints', function($q) {
                     $q->where('A_ID', Auth::user()->A_ID);
                 })->get();
+            } elseif (Auth::guard('mcmc')->check()) {
+                // This shouldn't be reached due to redirect above, but just in case
+                $allInquiries = collect([]);
             } else {
                 $allInquiries = collect([]);
             }
