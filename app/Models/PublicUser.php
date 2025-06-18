@@ -64,7 +64,7 @@ class PublicUser extends Authenticatable
     // Override the key name for sessions
     public function getKey()
     {
-        return $this->PU_Email;
+        return $this->PU_ID;
     }
 
     // Mutator to hash password

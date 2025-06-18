@@ -193,4 +193,8 @@ class ReportController extends Controller
         
         return null;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8

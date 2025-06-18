@@ -12,11 +12,11 @@
                 <p class="text-gray-600">Generate comprehensive reports with graphical representations and export options</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
-                <a href="{{ route('inquiries.mcmc.new') }}" 
+                <a href="{{ route('mcmc.inquiries.new') }}" 
                    class="inline-flex items-center px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                     <i class="fas fa-inbox mr-2"></i>New Inquiries
                 </a>
-                <a href="{{ route('inquiries.mcmc.previous') }}" 
+                <a href="{{ route('mcmc.inquiries.processed') }}" 
                    class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                     <i class="fas fa-history mr-2"></i>Previous Inquiries
                 </a>
@@ -46,7 +46,7 @@
                 </h3>
             </div>
             <div class="p-6">
-                <form method="GET" action="{{ route('inquiries.mcmc.report') }}" class="space-y-4">
+                <form method="GET" action="{{ route('mcmc.inquiry-reports.generate') }}" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                         <!-- Date From -->
                         <div>

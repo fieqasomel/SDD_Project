@@ -411,17 +411,9 @@
 
         // Add loading state to form submission
         document.querySelector('form').addEventListener('submit', function(e) {
-            console.log('Form submitted!'); // Debug log
             const submitBtn = this.querySelector('button[type="submit"]');
-<<<<<<< HEAD
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Signing In...';
             submitBtn.disabled = true;
-=======
-            if (submitBtn) {
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Signing In...';
-                submitBtn.disabled = true;
-            }
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
         });
     </script>
 </body>
