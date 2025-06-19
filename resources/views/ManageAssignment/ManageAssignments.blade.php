@@ -289,7 +289,7 @@
 
         <!-- Agency Search and Filter -->
         <div class="bg-white p-6 rounded-lg shadow mb-8">
-            <form method="GET" action="{{ route('agency.assignments') }}" class="grid md:grid-cols-4 gap-4">
+            <form method="GET" action="{{ route('assignments.index') }}" class="grid md:grid-cols-4 gap-4">
                 <div>
                     <label for="search" class="block text-sm font-medium text-gray-700">Search</label>
                     <input type="text" name="search" id="search" value="{{ request('search') }}" 
@@ -324,7 +324,7 @@
                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div class="flex items-end">
-                        <a href="{{ route('agency.assignments') }}" class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded">
+                        <a href="{{ route('assignments.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded">
                             <i class="fas fa-times mr-2"></i> Clear Filters
                         </a>
                     </div>
