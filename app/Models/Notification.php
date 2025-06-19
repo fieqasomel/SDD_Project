@@ -97,6 +97,22 @@ class Notification extends Model
     }
 
     /**
+     * Create notification for Agency about new assignment
+     */
+    public static function createAssignmentNotification($complaint)
+    {
+        $message = "New inquiry assigned: \"{$complaint->inquiry->I_Title}\" by {$complaint->mcmc->M_Name}. Please review and verify this assignment.";
+        
+        return self::create([
+            'N_ID' => self::generateNotificationId(),
+            'P_ID' => $complaint->A_ID, // Agency who received the assignment
+            'N_Message' => $message,
+            'N_Timestamp' => now(),
+            'N_Status' => 'UNREAD'
+        ]);
+    }
+
+    /**
      * Mark notification as read
      */
     public function markAsRead()
