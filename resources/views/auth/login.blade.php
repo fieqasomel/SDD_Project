@@ -409,13 +409,18 @@
             }
         });
 
-        // Add loading state to form submission
-        document.querySelector('form').addEventListener('submit', function(e) {
-            console.log('Form submitted!'); // Debug log
-            const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Signing In...';
-                submitBtn.disabled = true;
+        // Add loading state to form submission - wrapped in DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    console.log('Form submitted!'); // Debug log
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-3"></i>Signing In...';
+                        submitBtn.disabled = true;
+                    }
+                });
             }
         });
     </script>

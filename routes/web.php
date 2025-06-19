@@ -72,6 +72,11 @@ Route::get('/test-mcmc-login', function () {
     return view('auth.test-mcmc-login');
 });
 
+// Simple login test page
+Route::get('/login-test', function () {
+    return view('auth.login-test');
+});
+
 // Test MCMC authentication manually
 Route::get('/test-mcmc-auth', function () {
     $username = 'MCMC';

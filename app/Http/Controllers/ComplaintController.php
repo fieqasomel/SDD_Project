@@ -199,6 +199,9 @@ class ComplaintController extends Controller
             // Add initial history entry
             $complaint->addHistory('Inquiry assigned to ' . $agency->A_Name . ' for verification', $user->M_ID, 'MCMC');
             
+            // Create notification for agency about new assignment
+            Notification::createAssignmentNotification($complaint);
+            
             // Keep inquiry status as pending until agency verifies and accepts
             // $inquiry->update(['I_Status' => Inquiry::STATUS_IN_PROGRESS]); // Removed - will be updated after verification
         });

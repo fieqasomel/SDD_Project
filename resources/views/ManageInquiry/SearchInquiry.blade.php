@@ -629,7 +629,41 @@ document.getElementById('quickDecisionModal').addEventListener('click', function
     if (e.target === this) {
         closeQuickModal();
     }
-});
+});<?php
+// ...existing code...
+public function search(Request $request)
+{
+    $query = Inquiry::query();
+
+    // ...existing user-specific filters...
+
+    // ...existing search filters...
+
+    $inquiries = $query->orderBy('I_Date', 'desc')->paginate(10); // Use paginate for pagination
+
+    // Add these lines:
+    $categories = [
+        'General Information',
+        'Technical Support',
+        'Billing',
+        'Complaint',
+        'Service Request',
+        'Feedback',
+        'Other'
+    ];
+    $statuses = [
+        'Pending',
+        'In Progress',
+        'Resolved',
+        'Closed',
+        'Rejected',
+        'Verified as True',
+        'Identified as Fake'
+    ];
+
+    return view('ManageInquiry.SearchInquiries', compact('inquiries', 'categories', 'statuses'));
+}
+//
 </script>
 @endif
 
