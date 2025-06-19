@@ -30,7 +30,7 @@
                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                     <i class="fas fa-tags text-green-600 w-5 mr-3"></i>
                     <span class="text-gray-600 font-medium mr-2">Category:</span>
-                    <span class="text-gray-800 font-semibold">{{ $user->A_Category ?? 'N/A' }}</span>
+                    <span class="text-gray-800 font-semibold">{{ is_array($user->A_Category) ? implode(', ', $user->A_Category) : ($user->A_Category ?? 'N/A') }}</span>
                 </div>
                 <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                     <i class="fas fa-user text-green-600 w-5 mr-3"></i>

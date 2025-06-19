@@ -142,6 +142,7 @@
             </div>
         </div>
 
+<<<<<<< HEAD
         <!-- Assignment Management -->
         <div class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-red-200">
             <div class="p-6 text-center">
@@ -227,6 +228,8 @@
         </div>
     </div>
 
+=======
+>>>>>>> cbe7183a760c500e45566973f9f28657497c8249
     <!-- Quick Actions -->
     <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
         <div class="flex items-center mb-6">

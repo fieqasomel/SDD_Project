@@ -8,10 +8,14 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
+<<<<<<< HEAD
                 @if(isset($isMCMC) && $isMCMC)
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">All Inquiries</h1>
                     <p class="text-gray-600">View and manage all submitted inquiries from users</p>
                 @elseif(Auth::user() instanceof \App\Models\Agency)
+=======
+                @if(Auth::user() instanceof \App\Models\Agency)
+>>>>>>> cbe7183a760c500e45566973f9f28657497c8249
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">Assigned Inquiries</h1>
                     <p class="text-gray-600">View and manage inquiries assigned to your agency with complete history tracking</p>
                 @else
@@ -29,6 +33,7 @@
                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                         <i class="fas fa-chart-bar mr-2"></i>Generate Report
                     </a>
+<<<<<<< HEAD
                 @elseif(isset($isMCMC) && $isMCMC)
                     <a href="{{ route('assignments.index') }}" 
                        class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
@@ -38,6 +43,8 @@
                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                         <i class="fas fa-chart-bar mr-2"></i>Generate Reports
                     </a>
+=======
+>>>>>>> cbe7183a760c500e45566973f9f28657497c8249
                 @else
                     <a href="{{ route('inquiries.public') }}" 
                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
@@ -353,13 +360,8 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-<<<<<<< HEAD
-                                    @if(isset($isMCMC) && $isMCMC)
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
-=======
                                     @if(Auth::user() instanceof \App\Models\Agency)
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                                     @endif
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -376,25 +378,12 @@
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $inquiry->I_ID }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ $inquiry->I_Title }}</td>
-<<<<<<< HEAD
-                                        @if(isset($isMCMC) && $isMCMC)
-                                            <td class="px-6 py-4 text-sm text-gray-900">
-                                                @if($inquiry->publicUser)
-                                                    <div class="flex flex-col">
-                                                        <span class="font-medium text-gray-900">{{ $inquiry->publicUser->PU_Name }}</span>
-                                                        <span class="text-xs text-gray-500">{{ $inquiry->publicUser->PU_Email }}</span>
-                                                    </div>
-                                                @else
-                                                    <span class="text-gray-400 italic">User not found</span>
-                                                @endif
-=======
                                         @if(Auth::user() instanceof \App\Models\Agency)
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 <div>
                                                     <div class="font-medium">{{ $inquiry->publicUser->PU_Name ?? 'N/A' }}</div>
                                                     <div class="text-gray-500">{{ $inquiry->publicUser->PU_Email ?? 'N/A' }}</div>
                                                 </div>
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                                             </td>
                                         @endif
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Category }}</td>

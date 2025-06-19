@@ -25,13 +25,17 @@ class InquiryController extends Controller
             $isPublicUser = false;
             $isMCMC = false;
             
+<<<<<<< HEAD
             // Check user type and apply appropriate filters
+=======
+            // Check user type and apply appropriate filters (hybrid approach)
+>>>>>>> cbe7183a760c500e45566973f9f28657497c8249
             if (Auth::guard('publicuser')->check()) {
-                // Public User - show only their inquiries
+                // Public User via publicuser guard - show only their inquiries
                 $query->where('PU_ID', Auth::guard('publicuser')->user()->PU_ID);
                 $isPublicUser = true;
             } elseif (Auth::guard('mcmc')->check()) {
-                // MCMC Staff - show all inquiries for management
+                // MCMC Staff via mcmc guard - show all inquiries for management
                 // No additional filter needed, they can see all inquiries
                 $isMCMC = true;
             } elseif (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
@@ -86,7 +90,11 @@ class InquiryController extends Controller
             }
 
             // Date range filtering for agencies
+<<<<<<< HEAD
             if (Auth::user() instanceof \App\Models\Agency && $request->filled('date_from') && $request->filled('date_to')) {
+=======
+            if ((Auth::check() && Auth::user() instanceof \App\Models\Agency) && $request->filled('date_from') && $request->filled('date_to')) {
+>>>>>>> cbe7183a760c500e45566973f9f28657497c8249
                 $query->whereHas('complaints', function($q) use ($request) {
                     $q->whereBetween('C_AssignedDate', [$request->date_from, $request->date_to]);
                 });
@@ -99,14 +107,22 @@ class InquiryController extends Controller
                 $inquiries = $query->orderBy('I_Date', 'desc')->get();
             }
             
-            // Calculate statistics based on user type
+            // Calculate statistics based on user type (hybrid approach)
             if ($isPublicUser) {
                 // For Public Users - only their inquiries
                 $userId = Auth::guard('publicuser')->check() ? 
                          Auth::guard('publicuser')->user()->PU_ID : 
                          Auth::user()->PU_ID;
                 $allInquiries = Inquiry::where('PU_ID', $userId)->get();
+<<<<<<< HEAD
             } elseif (Auth::user() instanceof \App\Models\Agency) {
+=======
+            } elseif ($isMCMC) {
+                // For MCMC - all inquiries in the system
+                $allInquiries = Inquiry::all();
+            } elseif (Auth::check() && Auth::user() instanceof \App\Models\Agency) {
+                // For Agencies - inquiries assigned to them through complaints
+>>>>>>> cbe7183a760c500e45566973f9f28657497c8249
                 $allInquiries = Inquiry::whereHas('complaints', function($q) {
                     $q->where('A_ID', Auth::user()->A_ID);
                 })->get();

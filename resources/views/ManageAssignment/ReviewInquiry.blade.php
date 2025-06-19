@@ -109,7 +109,7 @@
                             <div class="text-sm text-gray-700">
                                 <p><strong>Reviewed by:</strong> {{ Auth::user()->A_Name }}</p>
                                 <p><strong>Review Date:</strong> {{ date('d M Y') }}</p>
-                                <p><strong>Agency:</strong> {{ Auth::user()->A_Category }}</p>
+                                <p><strong>Agency:</strong> {{ is_array(Auth::user()->A_Category) ? implode(', ', Auth::user()->A_Category) : Auth::user()->A_Category }}</p>
                             </div>
 
                             @if($complaint->C_History)

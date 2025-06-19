@@ -83,7 +83,7 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="font-semibold text-red-700">{{ $assignment->agency->A_Name }}</div>
-                                <div class="text-xs text-gray-500">{{ $assignment->agency->A_Category }}</div>
+                                <div class="text-xs text-gray-500">{{ is_array($assignment->agency->A_Category) ? implode(', ', $assignment->agency->A_Category) : $assignment->agency->A_Category }}</div>
                                 <span class="inline-block mt-1 text-xs px-2 py-1 bg-red-100 text-red-800 rounded">Rejected</span>
                             </td>
                             <td class="px-4 py-3">

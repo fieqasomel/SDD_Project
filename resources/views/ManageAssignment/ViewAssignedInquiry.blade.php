@@ -54,7 +54,7 @@
                 <div class="space-y-2 text-sm text-gray-700">
                     <p><strong>Assignment ID:</strong> {{ $complaint->C_ID }}</p>
                     <p><strong>Assigned to:</strong> {{ $complaint->agency->A_Name }}</p>
-                    <p><strong>Agency Category:</strong> <span class="inline-block bg-green-100 text-green-800 px-2 py-0.5 rounded">{{ $complaint->agency->A_Category }}</span></p>
+                    <p><strong>Agency Category:</strong> <span class="inline-block bg-green-100 text-green-800 px-2 py-0.5 rounded">{{ is_array($complaint->agency->A_Category) ? implode(', ', $complaint->agency->A_Category) : $complaint->agency->A_Category }}</span></p>
                     <p><strong>Assigned Date:</strong> {{ $complaint->C_AssignedDate->format('d M Y') }}</p>
                     <p><strong>Assigned by:</strong> {{ $complaint->mcmc->M_Name }}</p>
                     <p><strong>Days Since Assignment:</strong> 

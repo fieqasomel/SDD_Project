@@ -1,7 +1,8 @@
 {{-- 
     COMBINED ASSIGNMENT MANAGEMENT VIEW
-    This file serves both Public Users and MCMC staff with different views:
+    This file serves three types of users with different views:
     - Public Users: See their own assignments (My Assignments)
+    - Agency Users: See pending inquiries assigned to them for verification
     - MCMC Users: See administrative assignment management view
 --}}
 @extends('layouts.app')
@@ -9,7 +10,7 @@
 @section('title', 'Manage Assignments')
 
 @section('content')
-{{-- Check if user is a Public User or MCMC staff and show appropriate view --}}
+{{-- Check if user is a Public User, Agency User, or MCMC staff and show appropriate view --}}
 @if(auth()->user() && get_class(auth()->user()) === 'App\Models\PublicUser')
     {{-- PUBLIC USER VIEW - My Assignments --}}
     <div class="px-6 py-8 max-w-7xl mx-auto">
@@ -156,7 +157,7 @@
                                     {{ $inquiry->complaint->agency->A_Name }}
                                 </div>
                                 <div class="text-sm text-gray-500">
-                                    {{ $inquiry->complaint->agency->A_Category }}
+                                    {{ is_array($inquiry->complaint->agency->A_Category) ? implode(', ', $inquiry->complaint->agency->A_Category) : $inquiry->complaint->agency->A_Category }}
                                 </div>
                                 <div class="text-xs text-gray-400">
                                     Assigned by: {{ $inquiry->complaint->mcmc->M_Name }}
@@ -247,6 +248,418 @@
                         </ul>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+@elseif(auth()->user() && get_class(auth()->user()) === 'App\Models\Agency')
+    {{-- AGENCY USER VIEW - Inquiries Assigned by MCMC for Verification --}}
+    <div class="px-6 py-8 max-w-7xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">MCMC Assigned Inquiries</h2>
+            <div class="text-sm text-gray-600">
+                <i class="fas fa-clipboard-check mr-1"></i>
+                Verify inquiries forwarded by MCMC to {{ auth()->user()->A_Name }}
+            </div>
+        </div>
+
+        <!-- Agency Statistics Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
+            <div class="bg-blue-100 text-blue-800 p-4 rounded-lg shadow">
+                <h3 class="text-xl font-bold">{{ $stats['total_assigned_to_agency'] ?? 0 }}</h3>
+                <p class="text-sm">Assigned by MCMC</p>
+            </div>
+            <div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg shadow">
+                <h3 class="text-xl font-bold">{{ $stats['awaiting_verification'] ?? 0 }}</h3>
+                <p class="text-sm">Awaiting Review</p>
+            </div>
+            <div class="bg-green-100 text-green-800 p-4 rounded-lg shadow">
+                <h3 class="text-xl font-bold">{{ $stats['verified_by_agency'] ?? 0 }}</h3>
+                <p class="text-sm">Verified</p>
+            </div>
+            <div class="bg-red-100 text-red-800 p-4 rounded-lg shadow">
+                <h3 class="text-xl font-bold">{{ $stats['rejected_by_agency'] ?? 0 }}</h3>
+                <p class="text-sm">Rejected</p>
+            </div>
+            <div class="bg-orange-100 text-orange-800 p-4 rounded-lg shadow">
+                <h3 class="text-xl font-bold">{{ $stats['returned_to_mcmc'] ?? 0 }}</h3>
+                <p class="text-sm">Returned to MCMC</p>
+            </div>
+        </div>
+
+        <!-- Agency Search and Filter -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <form method="GET" action="{{ route('assignments.index') }}" class="grid md:grid-cols-4 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700">Search</label>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" 
+                           placeholder="Search by title, description, or ID..."
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700">Verification Status</label>
+                    <select name="status" id="status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Status</option>
+                        <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending Review</option>
+                        <option value="Verified" {{ request('status') == 'Verified' ? 'selected' : '' }}>Verified</option>
+                        <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>Rejected</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="date_from" class="block text-sm font-medium text-gray-700">From Date</label>
+                    <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" 
+                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full inline-flex justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded">
+                        <i class="fas fa-search mr-2"></i> Search
+                    </button>
+                </div>
+            </form>
+            <div class="mt-4 pt-4 border-t">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="date_to" class="block text-sm font-medium text-gray-700">To Date</label>
+                        <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" 
+                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="flex items-end">
+                        <a href="{{ route('assignments.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded">
+                            <i class="fas fa-times mr-2"></i> Clear Filters
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inquiries Assigned by MCMC for Verification -->
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+            @if(isset($assignedInquiries) && $assignedInquiries->isEmpty())
+                <div class="p-8 text-center text-gray-600">
+                    <i class="fas fa-inbox text-4xl mb-4 text-gray-400"></i>
+                    <h3 class="text-lg font-medium mb-2">No Inquiries Assigned</h3>
+                    <p class="mb-4">MCMC has not assigned any inquiries to your agency for verification at this time.</p>
+                    <div class="mt-4 text-sm text-gray-500">
+                        <p>You will see inquiries here when MCMC forwards them to your agency for verification.</p>
+                    </div>
+                </div>
+            @else
+                <div class="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        <h3 class="text-lg font-semibold text-blue-900">Inquiries Forwarded by MCMC</h3>
+                        <span class="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                            {{ isset($assignedInquiries) ? $assignedInquiries->count() : 0 }} pending verification
+                        </span>
+                    </div>
+                    <p class="text-sm text-blue-700 mt-1">
+                        These inquiries have been assigned to your agency by MCMC for verification of jurisdiction and scope.
+                    </p>
+                </div>
+
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inquiry Details</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned by MCMC</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verification Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days Since Assignment</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @if(isset($assignedInquiries))
+                            @foreach($assignedInquiries as $inquiry)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ Str::limit($inquiry->inquiry->I_Title, 50) }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            ID: {{ $inquiry->inquiry->I_ID }}
+                                        </span>
+                                    </div>
+                                    <div class="text-xs text-gray-400 mt-1">
+                                        {{ Str::limit($inquiry->inquiry->I_Description, 100) }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ $inquiry->inquiry->publicUser->PU_Name ?? 'N/A' }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ $inquiry->inquiry->publicUser->PU_Email ?? 'N/A' }}
+                                    </div>
+                                    <div class="text-xs text-gray-400">
+                                        Submitted: {{ $inquiry->inquiry->I_Date->format('d M Y') }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">
+                                    {{ $inquiry->C_AssignedDate->format('d M Y') }}
+                                    <div class="text-xs text-gray-500">
+                                        {{ $inquiry->C_AssignedDate->format('H:i') }}
+                                    </div>
+                                    <div class="text-xs text-gray-400">
+                                        MCMC Staff: {{ $inquiry->mcmc->M_Name }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        {{ $inquiry->inquiry->I_Category }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @php
+                                        $verificationStatus = $inquiry->C_VerificationStatus ?? 'Pending';
+                                        $verificationColor = match($verificationStatus) {
+                                            'Verified' => 'bg-green-100 text-green-800',
+                                            'Rejected' => 'bg-red-100 text-red-800',
+                                            'Pending' => 'bg-yellow-100 text-yellow-800',
+                                            default => 'bg-gray-100 text-gray-800'
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $verificationColor }}">
+                                        {{ $verificationStatus }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @php 
+                                        $days = $inquiry->C_AssignedDate->diffInDays(now());
+                                        $daysColor = $days > 7 ? 'bg-red-100 text-red-800' : ($days > 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
+                                    @endphp
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $daysColor }}">
+                                        {{ $days }} {{ $days == 1 ? 'day' : 'days' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm font-medium">
+                                    <div class="flex flex-col space-y-2">
+                                        <!-- View Inquiry Details -->
+                                        <a href="{{ route('inquiries.show', $inquiry->inquiry->I_ID) }}" 
+                                           class="inline-flex items-center px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded">
+                                            <i class="fas fa-eye mr-1"></i> View Details
+                                        </a>
+                                        
+                                        @if(($inquiry->C_VerificationStatus ?? 'Pending') === 'Pending')
+                                            <!-- Verify Button -->
+                                            <button type="button" 
+                                                    onclick="showVerifyModal({{ $inquiry->C_ID }}, '{{ $inquiry->inquiry->I_ID }}', '{{ addslashes($inquiry->inquiry->I_Title) }}')"
+                                                    class="inline-flex items-center px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded">
+                                                <i class="fas fa-check mr-1"></i> Verify
+                                            </button>
+                                            
+                                            <!-- Reject Button -->
+                                            <button type="button" 
+                                                    onclick="showRejectModal({{ $inquiry->C_ID }}, '{{ $inquiry->inquiry->I_ID }}', '{{ addslashes($inquiry->inquiry->I_Title) }}')"
+                                                    class="inline-flex items-center px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded">
+                                                <i class="fas fa-times mr-1"></i> Reject
+                                            </button>
+                                        @else
+                                            <!-- Already processed badge -->
+                                            <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                                                <i class="fas fa-check-circle mr-1"></i> Processed
+                                            </span>
+                                            
+                                            @if($inquiry->C_VerificationStatus === 'Rejected' && $inquiry->C_RejectionReason)
+                                                <button type="button" 
+                                                        onclick="showReason('{{ addslashes($inquiry->C_RejectionReason) }}', '{{ $inquiry->inquiry->I_ID }}')"
+                                                        class="inline-flex items-center px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white text-xs rounded">
+                                                    <i class="fas fa-info-circle mr-1"></i> View Reason
+                                                </button>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        @endif
+                    </tbody>
+                </table>
+                
+                <!-- Pagination -->
+                @if(isset($assignedInquiries))
+                    <div class="px-6 py-4 border-t">
+                        {{ $assignedInquiries->appends(request()->query())->links() }}
+                    </div>
+                @endif
+            @endif
+        </div>
+
+        <!-- Help Text for Agency Users -->
+        <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-yellow-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-yellow-800">MCMC Assignment Verification Process</h3>
+                    <div class="mt-2 text-sm text-yellow-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>MCMC Forwarded:</strong> These inquiries have been specifically assigned to your agency by MCMC staff</li>
+                            <li><strong>Verify Jurisdiction:</strong> Review each inquiry to determine if it falls under your agency's scope and authority</li>
+                            <li><strong>Accept & Proceed:</strong> If the inquiry is within your jurisdiction, click "Verify" to accept and begin processing</li>
+                            <li><strong>Reject & Return:</strong> If the inquiry is outside your scope, click "Reject" with a detailed explanation</li>
+                            <li><strong>Return to MCMC:</strong> Rejected inquiries will be returned to MCMC for reassignment to the appropriate agency</li>
+                            <li><strong>Timely Review:</strong> Please respond promptly to maintain efficient inquiry processing workflow</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify Inquiry Modal -->
+    <div id="verifyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                        Verify Inquiry
+                    </h3>
+                    <button type="button" onclick="closeVerifyModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="verifyForm" method="POST" action="">
+                @csrf
+                @method('PUT')
+                <div class="p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Inquiry ID:
+                        </label>
+                        <p id="verifyInquiryId" class="text-sm text-gray-900 font-mono bg-gray-100 px-3 py-2 rounded"></p>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Inquiry Title:
+                        </label>
+                        <p id="verifyInquiryTitle" class="text-sm text-gray-900 bg-gray-100 px-3 py-2 rounded"></p>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-sm text-green-800">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            By verifying this inquiry, you confirm that it falls under your agency's scope and you will proceed with processing it.
+                        </p>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3 rounded-b-2xl">
+                    <button type="button" 
+                            onclick="closeVerifyModal()"
+                            class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" 
+                            class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg">
+                        <i class="fas fa-check mr-2"></i>Verify Inquiry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reject Inquiry Modal -->
+    <div id="rejectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-times-circle text-red-600 mr-2"></i>
+                        Reject Inquiry
+                    </h3>
+                    <button type="button" onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="rejectForm" method="POST" action="">
+                @csrf
+                @method('PUT')
+                <div class="p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Inquiry ID:
+                        </label>
+                        <p id="rejectInquiryId" class="text-sm text-gray-900 font-mono bg-gray-100 px-3 py-2 rounded"></p>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Inquiry Title:
+                        </label>
+                        <p id="rejectInquiryTitle" class="text-sm text-gray-900 bg-gray-100 px-3 py-2 rounded"></p>
+                    </div>
+                    <div class="mb-4">
+                        <label for="rejectionReason" class="block text-sm font-medium text-gray-700 mb-2">
+                            Reason for Rejection: <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="rejection_reason" 
+                                  id="rejectionReason" 
+                                  rows="4" 
+                                  required
+                                  placeholder="Please provide a detailed explanation of why this inquiry doesn't fall under your agency's scope..."
+                                  class="w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">This reason will be forwarded to MCMC for reassignment consideration.</p>
+                    </div>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-sm text-red-800">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            By rejecting this inquiry, it will be returned to MCMC with your reason for reassignment to the correct agency.
+                        </p>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3 rounded-b-2xl">
+                    <button type="button" 
+                            onclick="closeRejectModal()"
+                            class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" 
+                            class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg">
+                        <i class="fas fa-times mr-2"></i>Reject Inquiry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Reason Modal -->
+    <div id="reasonModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-info-circle text-orange-600 mr-2"></i>
+                        Rejection Reason
+                    </h3>
+                    <button type="button" onclick="closeReasonModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Inquiry ID:
+                    </label>
+                    <p id="reasonInquiryId" class="text-sm text-gray-900 font-mono bg-gray-100 px-3 py-2 rounded"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for Rejection:
+                    </label>
+                    <div id="reasonText" class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-sm text-orange-800 min-h-[100px] max-h-[300px] overflow-y-auto whitespace-pre-wrap"></div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end rounded-b-2xl">
+                <button type="button" 
+                        onclick="closeReasonModal()"
+                        class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg">
+                    <i class="fas fa-times mr-2"></i>Close
+                </button>
             </div>
         </div>
     </div>
@@ -436,7 +849,7 @@
                             </td>
                             <td class="px-6 py-4 text-sm">
                                 <div class="font-medium">{{ $assignment->agency->A_Name }}</div>
-                                <span class="text-xs text-gray-500">{{ $assignment->agency->A_Category }}</span>
+                                <span class="text-xs text-gray-500">{{ is_array($assignment->agency->A_Category) ? implode(', ', $assignment->agency->A_Category) : $assignment->agency->A_Category }}</span>
                             </td>
                             <td class="px-6 py-4 text-sm">{{ $assignment->C_AssignedDate->format('d M Y') }}<br>
                                 <span class="text-xs text-gray-500">by {{ $assignment->mcmc->M_Name }}</span>
@@ -597,6 +1010,99 @@ document.addEventListener('click', function(event) {
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeRejectionModal();
+        closeVerifyModal();
+        closeRejectModal();
+        closeReasonModal();
+    }
+});
+
+// Agency Verify Modal Functions
+function showVerifyModal(complaintId, inquiryId, inquiryTitle) {
+    const modal = document.getElementById('verifyModal');
+    const form = document.getElementById('verifyForm');
+    const inquiryIdElement = document.getElementById('verifyInquiryId');
+    const inquiryTitleElement = document.getElementById('verifyInquiryTitle');
+    
+    inquiryIdElement.textContent = inquiryId;
+    inquiryTitleElement.textContent = inquiryTitle;
+    form.action = `/agency/assignments/${complaintId}/verify`;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeVerifyModal() {
+    const modal = document.getElementById('verifyModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = 'auto';
+}
+
+// Agency Reject Modal Functions
+function showRejectModal(complaintId, inquiryId, inquiryTitle) {
+    const modal = document.getElementById('rejectModal');
+    const form = document.getElementById('rejectForm');
+    const inquiryIdElement = document.getElementById('rejectInquiryId');
+    const inquiryTitleElement = document.getElementById('rejectInquiryTitle');
+    const reasonTextarea = document.getElementById('rejectionReason');
+    
+    inquiryIdElement.textContent = inquiryId;
+    inquiryTitleElement.textContent = inquiryTitle;
+    form.action = `/agency/assignments/${complaintId}/reject`;
+    reasonTextarea.value = '';
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRejectModal() {
+    const modal = document.getElementById('rejectModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = 'auto';
+}
+
+// Agency View Reason Modal Functions
+function showReason(reason, inquiryId) {
+    const modal = document.getElementById('reasonModal');
+    const inquiryIdElement = document.getElementById('reasonInquiryId');
+    const reasonTextElement = document.getElementById('reasonText');
+    
+    inquiryIdElement.textContent = inquiryId;
+    reasonTextElement.textContent = reason;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReasonModal() {
+    const modal = document.getElementById('reasonModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', function(event) {
+    // Verify Modal
+    const verifyModal = document.getElementById('verifyModal');
+    if (verifyModal && event.target === verifyModal) {
+        closeVerifyModal();
+    }
+    
+    // Reject Modal
+    const rejectModal = document.getElementById('rejectModal');
+    if (rejectModal && event.target === rejectModal) {
+        closeRejectModal();
+    }
+    
+    // Reason Modal
+    const reasonModal = document.getElementById('reasonModal');
+    if (reasonModal && event.target === reasonModal) {
+        closeReasonModal();
     }
 });
 </script>

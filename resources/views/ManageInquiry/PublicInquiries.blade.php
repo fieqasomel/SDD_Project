@@ -299,8 +299,8 @@
                                 @foreach($inquiries as $inquiry)
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $inquiry->I_ID }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-900">{{ Str::limit($inquiry->I_Title, 50) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Category }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">{{ Str::limit($inquiry->safe_title, 50) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->safe_category }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
                                                 $statusColors = [
@@ -310,10 +310,11 @@
                                                     'Closed' => 'bg-gray-100 text-gray-800',
                                                     'Rejected' => 'bg-red-100 text-red-800'
                                                 ];
-                                                $colorClass = $statusColors[$inquiry->I_Status] ?? 'bg-gray-100 text-gray-800';
+                                                $status = $inquiry->safe_status;
+                                                $colorClass = $statusColors[$status] ?? 'bg-gray-100 text-gray-800';
                                             @endphp
                                             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $colorClass }}">
-                                                {{ $inquiry->I_Status }}
+                                                {{ $status }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Date ? date('Y-m-d', strtotime($inquiry->I_Date)) : 'N/A' }}</td>
@@ -326,11 +327,11 @@
                                                 <!-- View Button (Limited Info) -->
                                                 <button class="view-inquiry-btn inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200"
                                                        data-inquiry-id="{{ $inquiry->I_ID }}"
-                                                       data-inquiry-title="{{ htmlspecialchars($inquiry->I_Title ?? '') }}"
-                                                       data-inquiry-category="{{ htmlspecialchars($inquiry->I_Category ?? '') }}"
-                                                       data-inquiry-status="{{ htmlspecialchars($inquiry->I_Status ?? '') }}"
+                                                       data-inquiry-title="{{ htmlspecialchars($inquiry->safe_title) }}"
+                                                       data-inquiry-category="{{ htmlspecialchars($inquiry->safe_category) }}"
+                                                       data-inquiry-status="{{ htmlspecialchars($inquiry->safe_status) }}"
                                                        data-inquiry-date="{{ $inquiry->I_Date ?? '' }}"
-                                                       data-inquiry-description="{{ htmlspecialchars($inquiry->I_Description ?? '') }}">
+                                                       data-inquiry-description="{{ htmlspecialchars($inquiry->safe_description) }}">
                                                     <i class="fas fa-eye mr-1"></i>View
                                                 </button>
                                             </div>

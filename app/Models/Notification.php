@@ -62,4 +62,53 @@ class Notification extends Model
     protected $casts = [
         'N_Timestamp' => 'datetime',
     ];
+
+    /**
+     * Generate unique notification ID
+     */
+    public static function generateNotificationId()
+    {
+        $lastNotification = self::orderBy('N_ID', 'desc')->first();
+        
+        if (!$lastNotification) {
+            return 'NOT0001';
+        }
+        
+        $lastNumber = intval(substr($lastNotification->N_ID, 3));
+        $newNumber = $lastNumber + 1;
+        
+        return 'NOT' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Create notification for MCMC about rejected assignment
+     */
+    public static function createRejectionNotification($complaint, $rejectionReason)
+    {
+        $message = "Assignment #{$complaint->C_ID} for inquiry \"{$complaint->inquiry->I_Title}\" has been rejected by {$complaint->agency->A_Name}. Reason: {$rejectionReason}";
+        
+        return self::create([
+            'N_ID' => self::generateNotificationId(),
+            'P_ID' => $complaint->M_ID, // MCMC who assigned it
+            'N_Message' => $message,
+            'N_Timestamp' => now(),
+            'N_Status' => 'UNREAD'
+        ]);
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function markAsRead()
+    {
+        $this->update(['N_Status' => 'READ']);
+    }
+
+    /**
+     * Check if notification is unread
+     */
+    public function isUnread()
+    {
+        return $this->N_Status === 'UNREAD';
+    }
 }

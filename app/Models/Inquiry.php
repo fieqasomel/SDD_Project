@@ -40,6 +40,10 @@ class Inquiry extends Model
         'rejection_reason'
     ];
 
+    protected $casts = [
+    'I_Date' => 'datetime',
+    ];
+
     // Relationship with PublicUser
     public function publicUser()
     {
@@ -134,7 +138,8 @@ class Inquiry extends Model
     // Get status badge color for styling
     public function getStatusBadgeColor()
     {
-        switch (strtolower($this->I_Status)) {
+        $status = $this->getSafeAttribute('I_Status');
+        switch (strtolower($status)) {
             case 'pending':
             case self::STATUS_PENDING:
                 return 'warning'; // yellow
@@ -159,5 +164,39 @@ class Inquiry extends Model
             default:
                 return 'secondary'; // gray
         }
+    }
+
+    // Helper method to safely get attribute values, handling arrays
+    public function getSafeAttribute($attribute)
+    {
+        $value = $this->getAttribute($attribute);
+        
+        if (is_array($value)) {
+            // If it's an array, convert to JSON or return first element
+            return is_array($value) && count($value) === 1 ? $value[0] : json_encode($value);
+        }
+        
+        return $value ?? '';
+    }
+
+    // Safe accessors for problematic fields
+    public function getSafeTitleAttribute()
+    {
+        return $this->getSafeAttribute('I_Title');
+    }
+
+    public function getSafeCategoryAttribute()
+    {
+        return $this->getSafeAttribute('I_Category');
+    }
+
+    public function getSafeStatusAttribute()
+    {
+        return $this->getSafeAttribute('I_Status');
+    }
+
+    public function getSafeDescriptionAttribute()
+    {
+        return $this->getSafeAttribute('I_Description');
     }
 }

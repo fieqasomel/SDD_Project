@@ -125,7 +125,7 @@ class ReportController extends Controller
             'agencyName' => $agencyName
         ]]);
         
-        return view('ManageAssignment.AssignmentReport', compact(
+        return view('assignments.report', compact(
             'agencyStats',
             'monthlyTrends',
             'categoryDistribution',
