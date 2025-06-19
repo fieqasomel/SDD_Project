@@ -1,11 +1,11 @@
-<div class="w-full bg-red-600 text-white shadow-md">
+<div class="w-full bg-blue-600 text-white shadow-md">
     <div class="max-w-7xl mx-auto">
         <!-- Mobile header -->
-        <div class="flex items-center justify-between px-4 h-16 border-b border-red-700 md:hidden">
+        <div class="flex items-center justify-between px-4 h-16 border-b border-blue-700 md:hidden">
             <h1 class="text-lg font-bold flex items-center">
                 <i class="fas fa-user-circle mr-2"></i>Public User Portal
             </h1>
-            <button class="p-2 rounded hover:bg-red-700 transition-colors" id="toggleSidebar">
+            <button class="p-2 rounded hover:bg-blue-700 transition-colors" id="toggleSidebar">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                      xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -17,20 +17,20 @@
         <!-- Desktop & Mobile Navigation -->
         <nav class="hidden md:flex flex-col md:flex-row items-center justify-between px-4" id="navMenu">
             <div class="flex flex-col md:flex-row items-center md:space-x-1">
-                <a href="{{ route('publicuser.dashboard') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-tachometer-alt mr-2 group-hover:text-pink-300"></i>
+                <a href="{{ route('publicuser.dashboard') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-teal-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-tachometer-alt mr-2 group-hover:text-teal-300"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="{{ route('publicuser.inquiries') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
+                <a href="{{ route('publicuser.inquiries') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-teal-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-clipboard-list mr-2 group-hover:text-teal-300"></i>
                     <span>My Inquiries</span>
                 </a>
-                <a href="{{ route('publicuser.inquiries') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
+                <a href="{{ route('publicuser.assignments') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-lime-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-tasks mr-2 group-hover:text-lime-300"></i>
                     <span>My Assignments</span>
                 </a>
-                <a href="{{ route('publicuser.inquiries') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-pink-900 rounded-md transition-colors duration-200 group">
-                    <i class="fas fa-clipboard-list mr-2 group-hover:text-pink-300"></i>
+                <a href="{{ route('inquiries.search') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-lime-900 rounded-md transition-colors duration-200 group">
+                    <i class="fas fa-search mr-2 group-hover:text-lime-300"></i>
                     <span>My Tracker</span>
                 </a>
             </div>
@@ -65,8 +65,6 @@
             window.addEventListener('resize', checkScreenSize);
         }
     });
-<<<<<<< HEAD
-=======
     
     // Toggle user menu
     function toggleUserMenu() {
@@ -83,5 +81,4 @@
             userMenu.classList.add('hidden');
         }
     });
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 </script>

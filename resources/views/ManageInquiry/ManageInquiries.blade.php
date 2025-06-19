@@ -8,7 +8,10 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
-                @if(Auth::user() instanceof \App\Models\Agency)
+                @if(isset($isMCMC) && $isMCMC)
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">All Inquiries</h1>
+                    <p class="text-gray-600">View and manage all submitted inquiries from users</p>
+                @elseif(Auth::user() instanceof \App\Models\Agency)
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">Assigned Inquiries</h1>
                     <p class="text-gray-600">View and manage inquiries assigned to your agency with complete history tracking</p>
                 @else
@@ -25,6 +28,15 @@
                     <a href="{{ route('assignments.report') }}" 
                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                         <i class="fas fa-chart-bar mr-2"></i>Generate Report
+                    </a>
+                @elseif(isset($isMCMC) && $isMCMC)
+                    <a href="{{ route('assignments.index') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-tasks mr-2"></i>Manage Assignments
+                    </a>
+                    <a href="{{ route('inquiries.report') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                        <i class="fas fa-chart-bar mr-2"></i>Generate Reports
                     </a>
                 @else
                     <a href="{{ route('inquiries.public') }}" 
@@ -341,8 +353,13 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+<<<<<<< HEAD
+                                    @if(isset($isMCMC) && $isMCMC)
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
+=======
                                     @if(Auth::user() instanceof \App\Models\Agency)
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+>>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                                     @endif
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -359,12 +376,25 @@
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $inquiry->I_ID }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ $inquiry->I_Title }}</td>
+<<<<<<< HEAD
+                                        @if(isset($isMCMC) && $isMCMC)
+                                            <td class="px-6 py-4 text-sm text-gray-900">
+                                                @if($inquiry->publicUser)
+                                                    <div class="flex flex-col">
+                                                        <span class="font-medium text-gray-900">{{ $inquiry->publicUser->PU_Name }}</span>
+                                                        <span class="text-xs text-gray-500">{{ $inquiry->publicUser->PU_Email }}</span>
+                                                    </div>
+                                                @else
+                                                    <span class="text-gray-400 italic">User not found</span>
+                                                @endif
+=======
                                         @if(Auth::user() instanceof \App\Models\Agency)
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 <div>
                                                     <div class="font-medium">{{ $inquiry->publicUser->PU_Name ?? 'N/A' }}</div>
                                                     <div class="text-gray-500">{{ $inquiry->publicUser->PU_Email ?? 'N/A' }}</div>
                                                 </div>
+>>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                                             </td>
                                         @endif
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Category }}</td>
@@ -392,25 +422,42 @@
                                                     <i class="fas fa-eye mr-1"></i>View
                                                 </a>
                                                 
-                                                @if($inquiry->I_Status === 'Pending')
-                                                    <!-- Edit Button -->
-                                                    <a href="{{ route('inquiries.edit', $inquiry->I_ID) }}" 
-                                                       class="inline-flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
-                                                        <i class="fas fa-edit mr-1"></i>Edit
-                                                    </a>
-                                                    
-                                                    <!-- Delete Button -->
-                                                    <form method="POST" action="{{ route('inquiries.destroy', $inquiry->I_ID) }}" class="inline-block">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" 
-                                                                onclick="return confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')"
-                                                                class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
-                                                            <i class="fas fa-trash mr-1"></i>Delete
-                                                        </button>
-                                                    </form>
+                                                @if(isset($isMCMC) && $isMCMC)
+                                                    <!-- MCMC Management Actions -->
+                                                    @if($inquiry->I_Status === 'Pending')
+                                                        <a href="{{ route('assignments.assign', $inquiry->I_ID) }}" 
+                                                           class="inline-flex items-center px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                            <i class="fas fa-user-plus mr-1"></i>Assign
+                                                        </a>
+                                                    @endif
+                                                    @if(in_array($inquiry->I_Status, ['Pending', 'In Progress']))
+                                                        <a href="{{ route('inquiry.progress.edit', $inquiry->I_ID) }}" 
+                                                           class="inline-flex items-center px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                            <i class="fas fa-tasks mr-1"></i>Manage
+                                                        </a>
+                                                    @endif
                                                 @else
-                                                    <span class="text-xs text-gray-500 italic">Cannot edit/delete</span>
+                                                    <!-- Public User Actions -->
+                                                    @if($inquiry->I_Status === 'Pending')
+                                                        <!-- Edit Button -->
+                                                        <a href="{{ route('inquiries.edit', $inquiry->I_ID) }}" 
+                                                           class="inline-flex items-center px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                            <i class="fas fa-edit mr-1"></i>Edit
+                                                        </a>
+                                                        
+                                                        <!-- Delete Button -->
+                                                        <form method="POST" action="{{ route('inquiries.destroy', $inquiry->I_ID) }}" class="inline-block">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" 
+                                                                    onclick="return confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')"
+                                                                    class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                                                                <i class="fas fa-trash mr-1"></i>Delete
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span class="text-xs text-gray-500 italic">Cannot edit/delete</span>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </td>

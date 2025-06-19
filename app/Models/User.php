@@ -2,43 +2,14 @@
 
 namespace App\Models;
 
-<<<<<<< HEAD
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-=======
-<<<<<<< HEAD
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-=======
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Jetstream\HasProfilePhoto;
->>>>>>> 4359da4baaff1ab2cb6f67b12512ab9f32b9b586
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-<<<<<<< HEAD
     use HasApiTokens, HasFactory, Notifiable;
-=======
-<<<<<<< HEAD
-    use HasApiTokens, HasFactory, Notifiable;
-=======
-    use HasApiTokens;
-
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory;
-    use HasProfilePhoto;
-    use Notifiable;
-    use TwoFactorAuthenticatable;
->>>>>>> 4359da4baaff1ab2cb6f67b12512ab9f32b9b586
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 
     /**
      * The attributes that are mass assignable.
@@ -46,22 +17,10 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
         'U_Name',
         'U_Email',
         'U_Password',
         'U_Role',
-<<<<<<< HEAD
-=======
-=======
-        'name',
-        'email',
-        'password',
->>>>>>> 4359da4baaff1ab2cb6f67b12512ab9f32b9b586
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
     ];
 
     /**
@@ -70,10 +29,6 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
         'U_Password',
         'remember_token',
     ];
@@ -165,38 +120,4 @@ class User extends Authenticatable
     {
         $this->attributes['U_Password'] = $value;
     }
-<<<<<<< HEAD
 }
-=======
-}
-=======
-        'password',
-        'remember_token',
-        'two_factor_recovery_codes',
-        'two_factor_secret',
-    ];
-
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array<int, string>
-     */
-    protected $appends = [
-        'profile_photo_url',
-    ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
-}
->>>>>>> 4359da4baaff1ab2cb6f67b12512ab9f32b9b586
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff

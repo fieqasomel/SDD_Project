@@ -52,6 +52,12 @@ class Inquiry extends Model
         return $this->hasMany(Complaint::class, 'I_ID', 'I_ID');
     }
 
+    // Singular relationship with Complaint (for latest assignment)
+    public function complaint()
+    {
+        return $this->hasOne(Complaint::class, 'I_ID', 'I_ID')->latest('C_AssignedDate');
+    }
+
     // Relationship with MCMC (who processed the inquiry)
     public function mcmcProcessor()
     {
@@ -87,6 +93,11 @@ class Inquiry extends Model
     public function isRejected()
     {
         return $this->I_Status === self::STATUS_REJECTED || $this->I_Status === 'Rejected';
+    }
+
+    public function isAssigned()
+    {
+        return $this->complaints()->exists();
     }
 
     // Get all available statuses
