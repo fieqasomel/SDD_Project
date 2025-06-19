@@ -21,7 +21,7 @@
                     <i class="fas fa-tachometer-alt mr-2 group-hover:text-lime-300"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="{{ route('publicuser.inquiries') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-lime-900 rounded-md transition-colors duration-200 group">
+                <a href="{{ route('inquiries.index') }}" class="w-full md:w-auto flex items-center py-3 px-4 hover:bg-lime-900 rounded-md transition-colors duration-200 group">
                     <i class="fas fa-clipboard-list mr-2 group-hover:text-lime-300"></i>
                     <span>My Inquiries</span>
                 </a>

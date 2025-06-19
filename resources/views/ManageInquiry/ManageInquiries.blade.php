@@ -392,21 +392,7 @@
                                                     <i class="fas fa-eye mr-1"></i>View
                                                 </a>
                                                 
-                                                @if(isset($isMCMC) && $isMCMC)
-                                                    <!-- MCMC Management Actions -->
-                                                    @if($inquiry->I_Status === 'Pending')
-                                                        <a href="{{ route('assignments.assign', $inquiry->I_ID) }}" 
-                                                           class="inline-flex items-center px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
-                                                            <i class="fas fa-user-plus mr-1"></i>Assign
-                                                        </a>
-                                                    @endif
-                                                    @if(in_array($inquiry->I_Status, ['Pending', 'In Progress']))
-                                                        <a href="{{ route('inquiry.progress.edit', $inquiry->I_ID) }}" 
-                                                           class="inline-flex items-center px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
-                                                            <i class="fas fa-tasks mr-1"></i>Manage
-                                                        </a>
-                                                    @endif
-                                                @else
+                                                @if(isset($isPublicUser) && $isPublicUser)
                                                     <!-- Public User Actions -->
                                                     @if($inquiry->I_Status === 'Pending')
                                                         <!-- Edit Button -->
