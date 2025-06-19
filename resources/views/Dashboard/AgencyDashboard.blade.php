@@ -142,9 +142,6 @@
                         </div>
                     </div>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">View Inquiries</h3>
-                <p class="text-gray-600 mb-6 leading-relaxed">View and manage all inquiries assigned to your agency with complete history</p>
-                <a href="{{ route('inquiries.index') }}" class="btn-success inline-block">View Inquiries</a>
             </div>
         </div>
 </div>

@@ -25,11 +25,11 @@ class InquiryController extends Controller
             $isPublicUser = false;
             $isMCMC = false;
             
-<<<<<<< HEAD
+
             // Check user type and apply appropriate filters
-=======
+
             // Check user type and apply appropriate filters (hybrid approach)
->>>>>>> cbe7183a760c500e45566973f9f28657497c8249
+
             if (Auth::guard('publicuser')->check()) {
                 // Public User via publicuser guard - show only their inquiries
                 $query->where('PU_ID', Auth::guard('publicuser')->user()->PU_ID);
@@ -90,11 +90,7 @@ class InquiryController extends Controller
             }
 
             // Date range filtering for agencies
-<<<<<<< HEAD
-            if (Auth::user() instanceof \App\Models\Agency && $request->filled('date_from') && $request->filled('date_to')) {
-=======
             if ((Auth::check() && Auth::user() instanceof \App\Models\Agency) && $request->filled('date_from') && $request->filled('date_to')) {
->>>>>>> cbe7183a760c500e45566973f9f28657497c8249
                 $query->whereHas('complaints', function($q) use ($request) {
                     $q->whereBetween('C_AssignedDate', [$request->date_from, $request->date_to]);
                 });
@@ -114,21 +110,17 @@ class InquiryController extends Controller
                          Auth::guard('publicuser')->user()->PU_ID : 
                          Auth::user()->PU_ID;
                 $allInquiries = Inquiry::where('PU_ID', $userId)->get();
-<<<<<<< HEAD
-            } elseif (Auth::user() instanceof \App\Models\Agency) {
-=======
             } elseif ($isMCMC) {
                 // For MCMC - all inquiries in the system
                 $allInquiries = Inquiry::all();
             } elseif (Auth::check() && Auth::user() instanceof \App\Models\Agency) {
                 // For Agencies - inquiries assigned to them through complaints
->>>>>>> cbe7183a760c500e45566973f9f28657497c8249
                 $allInquiries = Inquiry::whereHas('complaints', function($q) {
                     $q->where('A_ID', Auth::user()->A_ID);
                 })->get();
             } else {
-                // For MCMC - all inquiries in the system
-                $allInquiries = Inquiry::all();
+                // Default fallback - empty collection
+                $allInquiries = collect([]);
             }
             
             $stats = [
@@ -207,7 +199,11 @@ class InquiryController extends Controller
             $attachmentPath = null;
             if ($request->hasFile('attachment')) {
                 $file = $request->file('attachment');
-                $fileName = time() . '_' . $file->getClientOriginalName();
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension = $file->getClientOriginalExtension();
+                // Sanitize filename and add timestamp for uniqueness
+                $sanitizedName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
+                $fileName = time() . '_' . $sanitizedName . '.' . $extension;
                 $attachmentPath = $file->storeAs('inquiries', $fileName, 'public');
             }
 
@@ -230,7 +226,7 @@ class InquiryController extends Controller
             // Get the correct PU_ID from authenticated user
             if (Auth::guard('publicuser')->check()) {
                 $inquiry->PU_ID = Auth::guard('publicuser')->user()->PU_ID;
-            } elseif (Auth::user() instanceof \App\Models\PublicUser) {
+            } elseif (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
                 $inquiry->PU_ID = Auth::user()->PU_ID;
             } else {
                 $inquiry->PU_ID = null; // Or handle other user types

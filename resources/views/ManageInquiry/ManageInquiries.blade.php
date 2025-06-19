@@ -8,14 +8,10 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
-<<<<<<< HEAD
                 @if(isset($isMCMC) && $isMCMC)
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">All Inquiries</h1>
                     <p class="text-gray-600">View and manage all submitted inquiries from users</p>
                 @elseif(Auth::user() instanceof \App\Models\Agency)
-=======
-                @if(Auth::user() instanceof \App\Models\Agency)
->>>>>>> cbe7183a760c500e45566973f9f28657497c8249
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">Assigned Inquiries</h1>
                     <p class="text-gray-600">View and manage inquiries assigned to your agency with complete history tracking</p>
                 @else
@@ -33,7 +29,6 @@
                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                         <i class="fas fa-chart-bar mr-2"></i>Generate Report
                     </a>
-<<<<<<< HEAD
                 @elseif(isset($isMCMC) && $isMCMC)
                     <a href="{{ route('assignments.index') }}" 
                        class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
@@ -43,8 +38,6 @@
                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                         <i class="fas fa-chart-bar mr-2"></i>Generate Reports
                     </a>
-=======
->>>>>>> cbe7183a760c500e45566973f9f28657497c8249
                 @else
                     <a href="{{ route('inquiries.public') }}" 
                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
