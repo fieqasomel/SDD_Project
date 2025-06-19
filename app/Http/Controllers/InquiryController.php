@@ -21,35 +21,26 @@ class InquiryController extends Controller
             $isPublicUser = false;
             $isMCMC = false;
             
-<<<<<<< HEAD
-            // Check user type and apply appropriate filters
+            // Check user type and apply appropriate filters (hybrid approach)
             if (Auth::guard('publicuser')->check()) {
-                // Public User - show only their inquiries
+                // Public User via publicuser guard - show only their inquiries
                 $query->where('PU_ID', Auth::guard('publicuser')->user()->PU_ID);
                 $isPublicUser = true;
             } elseif (Auth::guard('mcmc')->check()) {
-                // MCMC Staff - show all inquiries for management
+                // MCMC Staff via mcmc guard - show all inquiries for management
                 // No additional filter needed, they can see all inquiries
                 $isMCMC = true;
             } elseif (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
                 // Fallback for default guard PublicUser
                 $query->where('PU_ID', Auth::user()->PU_ID);
                 $isPublicUser = true;
-            } else {
-                // If not authenticated or invalid user type, return empty
-=======
-            // Handle different user types
-            if (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
-                // Public users see their own inquiries
-                $query->where('PU_ID', Auth::user()->PU_ID);
             } elseif (Auth::check() && Auth::user() instanceof \App\Models\Agency) {
                 // Agencies see inquiries assigned to them through complaints
                 $query->whereHas('complaints', function($q) {
                     $q->where('A_ID', Auth::user()->A_ID);
                 });
             } else {
-                // If not authenticated or not a recognized user type, return empty
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
+                // If not authenticated or invalid user type, return empty
                 return view('ManageInquiry.ManageInquiries', [
                     'inquiries' => collect([]),
                     'stats' => [
@@ -90,7 +81,13 @@ class InquiryController extends Controller
                 $query->where('I_Status', $request->status);
             }
 
-<<<<<<< HEAD
+            // Date range filtering for agencies
+            if ((Auth::check() && Auth::user() instanceof \App\Models\Agency) && $request->filled('date_from') && $request->filled('date_to')) {
+                $query->whereHas('complaints', function($q) use ($request) {
+                    $q->whereBetween('C_AssignedDate', [$request->date_from, $request->date_to]);
+                });
+            }
+
             // Get inquiries with relationships (especially for MCMC to see user details)
             if ($isMCMC) {
                 $inquiries = $query->with(['publicUser', 'complaints'])->orderBy('I_Date', 'desc')->get();
@@ -98,33 +95,18 @@ class InquiryController extends Controller
                 $inquiries = $query->orderBy('I_Date', 'desc')->get();
             }
             
-            // Calculate statistics based on user type
+            // Calculate statistics based on user type (hybrid approach)
             if ($isPublicUser) {
                 // For Public Users - only their inquiries
                 $userId = Auth::guard('publicuser')->check() ? 
                          Auth::guard('publicuser')->user()->PU_ID : 
                          Auth::user()->PU_ID;
                 $allInquiries = Inquiry::where('PU_ID', $userId)->get();
-            } else {
+            } elseif ($isMCMC) {
                 // For MCMC - all inquiries in the system
                 $allInquiries = Inquiry::all();
-            }
-            
-=======
-            // Date range filtering for agencies
-            if (Auth::user() instanceof \App\Models\Agency && $request->filled('date_from') && $request->filled('date_to')) {
-                $query->whereHas('complaints', function($q) use ($request) {
-                    $q->whereBetween('C_AssignedDate', [$request->date_from, $request->date_to]);
-                });
-            }
-
-            // Get inquiries
-            $inquiries = $query->orderBy('I_Date', 'desc')->get();
-            
-            // Calculate statistics (for all user's inquiries, not just filtered)
-            if (Auth::user() instanceof \App\Models\PublicUser) {
-                $allInquiries = Inquiry::where('PU_ID', Auth::user()->PU_ID)->get();
-            } elseif (Auth::user() instanceof \App\Models\Agency) {
+            } elseif (Auth::check() && Auth::user() instanceof \App\Models\Agency) {
+                // For Agencies - inquiries assigned to them through complaints
                 $allInquiries = Inquiry::whereHas('complaints', function($q) {
                     $q->where('A_ID', Auth::user()->A_ID);
                 })->get();
@@ -132,7 +114,6 @@ class InquiryController extends Controller
                 $allInquiries = collect([]);
             }
             
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
             $stats = [
                 'total' => $allInquiries->count(),
                 'pending' => $allInquiries->where('I_Status', 'Pending')->count(),
@@ -271,7 +252,6 @@ class InquiryController extends Controller
                 return redirect()->route('inquiries.index')->with('error', 'Inquiry not found.');
             }
             
-<<<<<<< HEAD
             // Check authorization based on user type
             if (Auth::guard('mcmc')->check()) {
                 // MCMC staff can view all inquiries
@@ -295,22 +275,6 @@ class InquiryController extends Controller
             
             return view('ManageInquiry.ViewInquiryDetails', compact('inquiry', 'isMCMC'));
             
-=======
-            // Check user type and permissions
-            if (Auth::guard('mcmc')->check()) {
-                // MCMC staff can view any inquiry for filtering/validation
-                return view('ManageInquiry.MCMCFilterInquiry', compact('inquiry'));
-            } elseif (Auth::check() && Auth::user() instanceof \App\Models\PublicUser) {
-                // Public users can only view their own inquiries
-                if ($inquiry->PU_ID !== Auth::user()->PU_ID) {
-                    return redirect()->route('inquiries.index')->with('error', 'You are not authorized to view this inquiry.');
-                }
-                return view('ManageInquiry.ViewInquiryDetails', compact('inquiry'));
-            } else {
-                return redirect()->route('login')->with('error', 'Please login to view inquiries.');
-            }
-            
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
         } catch (\Exception $e) {
             \Log::error('Error viewing inquiry: ' . $e->getMessage());
             return redirect()->route('inquiries.index')->with('error', 'Error viewing inquiry.');

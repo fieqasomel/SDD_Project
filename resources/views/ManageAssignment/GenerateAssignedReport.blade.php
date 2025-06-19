@@ -104,7 +104,7 @@
                                 <tr class="hover:bg-gray-50 transition-colors duration-150">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-200">{{ $stat['agency']->A_Name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-r border-gray-200">
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ $stat['agency']->A_Category }}</span>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ is_array($stat['agency']->A_Category) ? implode(', ', $stat['agency']->A_Category) : $stat['agency']->A_Category }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">{{ $stat['count'] }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-200">{{ number_format($percentage, 1) }}%</td>

@@ -2,43 +2,22 @@
 
 namespace App\Models;
 
-<<<<<<< HEAD
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-=======
-<<<<<<< HEAD
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-=======
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
->>>>>>> 4359da4baaff1ab2cb6f67b12512ab9f32b9b586
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-<<<<<<< HEAD
-    use HasApiTokens, HasFactory, Notifiable;
-=======
-<<<<<<< HEAD
-    use HasApiTokens, HasFactory, Notifiable;
-=======
     use HasApiTokens;
-
+    
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
->>>>>>> 4359da4baaff1ab2cb6f67b12512ab9f32b9b586
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
 
     /**
      * The attributes that are mass assignable.
@@ -46,22 +25,13 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
         'U_Name',
-        'U_Email',
+        'U_Email',  
         'U_Password',
         'U_Role',
-<<<<<<< HEAD
-=======
-=======
         'name',
         'email',
         'password',
->>>>>>> 4359da4baaff1ab2cb6f67b12512ab9f32b9b586
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
     ];
 
     /**
@@ -70,106 +40,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff
         'U_Password',
-        'remember_token',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'U_Password' => 'hashed',
-    ];
-
-    /**
-     * Get the name of the unique identifier for the user.
-     *
-     * @return string
-     */
-    public function getAuthIdentifierName()
-    {
-        return 'id';
-    }
-
-    /**
-     * Get the password for the user.
-     *
-     * @return string
-     */
-    public function getAuthPassword()
-    {
-        return $this->U_Password;
-    }
-
-    /**
-     * Get the column name for the "email" attribute.
-     *
-     * @return string
-     */
-    public function getEmailColumn()
-    {
-        return 'U_Email';
-    }
-
-    /**
-     * Accessor for name attribute
-     */
-    public function getNameAttribute()
-    {
-        return $this->U_Name;
-    }
-
-    /**
-     * Accessor for email attribute
-     */
-    public function getEmailAttribute()
-    {
-        return $this->U_Email;
-    }
-
-    /**
-     * Accessor for password attribute
-     */
-    public function getPasswordAttribute()
-    {
-        return $this->U_Password;
-    }
-
-    /**
-     * Mutator for name attribute
-     */
-    public function setNameAttribute($value)
-    {
-        $this->attributes['U_Name'] = $value;
-    }
-
-    /**
-     * Mutator for email attribute
-     */
-    public function setEmailAttribute($value)
-    {
-        $this->attributes['U_Email'] = $value;
-    }
-
-    /**
-     * Mutator for password attribute
-     */
-    public function setPasswordAttribute($value)
-    {
-        $this->attributes['U_Password'] = $value;
-    }
-<<<<<<< HEAD
-}
-=======
-}
-=======
         'password',
         'remember_token',
         'two_factor_recovery_codes',
@@ -194,9 +65,89 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'U_Password' => 'hashed',
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the name of the unique identifier for the user.
+     *
+     * @return string
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'id';
+    }
+
+    /**
+     * Get the password for the user.
+     *
+     * @return string
+     */
+    public function getAuthPassword()
+    {
+        return $this->U_Password ?? $this->password;
+    }
+
+    /**
+     * Get the column name for the "email" attribute.
+     *
+     * @return string
+     */
+    public function getEmailColumn()
+    {
+        return 'U_Email';
+    }
+
+    /**
+     * Accessor for name attribute
+     */
+    public function getNameAttribute()
+    {
+        return $this->attributes['name'] ?? $this->U_Name;
+    }
+
+    /**
+     * Accessor for email attribute
+     */
+    public function getEmailAttribute()
+    {
+        return $this->attributes['email'] ?? $this->U_Email;
+    }
+
+    /**
+     * Accessor for password attribute
+     */
+    public function getPasswordAttribute()
+    {
+        return $this->attributes['password'] ?? $this->U_Password;
+    }
+
+    /**
+     * Mutator for name attribute
+     */
+    public function setNameAttribute($value)
+    {
+        $this->attributes['U_Name'] = $value;
+        $this->attributes['name'] = $value;
+    }
+
+    /**
+     * Mutator for email attribute
+     */
+    public function setEmailAttribute($value)
+    {
+        $this->attributes['U_Email'] = $value;
+        $this->attributes['email'] = $value;
+    }
+
+    /**
+     * Mutator for password attribute
+     */
+    public function setPasswordAttribute($value)
+    {
+        $this->attributes['U_Password'] = $value;
+        $this->attributes['password'] = $value;
+    }
 }
->>>>>>> 4359da4baaff1ab2cb6f67b12512ab9f32b9b586
->>>>>>> 7c0c8ae950046f3a42dd8665bd731039ac9f90ff

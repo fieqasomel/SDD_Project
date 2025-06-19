@@ -147,7 +147,7 @@
                         </div>
                         <div class="p-4 bg-white text-sm text-gray-700 space-y-2">
                             <p><strong>Agency:</strong> {{ $complaint->agency->A_Name }}</p>
-                            <p><strong>Agency Category:</strong> <span class="inline-block bg-green-500 text-white px-2 py-1 rounded text-xs">{{ $complaint->agency->A_Category }}</span></p>
+                            <p><strong>Agency Category:</strong> <span class="inline-block bg-green-500 text-white px-2 py-1 rounded text-xs">{{ is_array($complaint->agency->A_Category) ? implode(', ', $complaint->agency->A_Category) : $complaint->agency->A_Category }}</span></p>
                             <p><strong>Assigned by:</strong> {{ $complaint->mcmc->M_Name }}</p>
                             <p><strong>Assignment Duration:</strong> {{ $complaint->C_AssignedDate->diffInDays(now()) }} days</p>
                         </div>

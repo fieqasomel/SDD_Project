@@ -51,14 +51,14 @@
                                 <option value="">-- Select New Agency --</option>
                                 @foreach($agencies as $agency)
                                     <option value="{{ $agency->A_ID }}" {{ old('agency_id') == $agency->A_ID ? 'selected' : '' }}>
-                                        {{ $agency->A_Name }} - {{ $agency->A_Category }}
+                                        {{ $agency->A_Name }} - {{ is_array($agency->A_Category) ? implode(', ', $agency->A_Category) : $agency->A_Category }}
                                     </option>
                                 @endforeach
                             </select>
                             @error('agency_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
-                            <p class="text-xs text-gray-500 mt-1">Only agencies that handle "{{ $complaint->inquiry->I_Category }}" category are shown (excluding current agency).</p>
+                            <p class="text-xs text-green-600 mt-1">All agencies can now accept inquiries from any category, including "{{ $complaint->inquiry->I_Category }}" (excluding current agency).</p>
                         </div>
 
                         <div>

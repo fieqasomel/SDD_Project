@@ -8,24 +8,15 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
-<<<<<<< HEAD
-                @if(isset($isMCMC) && $isMCMC)
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">All Inquiries</h1>
-                    <p class="text-gray-600">View and manage all submitted inquiries from users</p>
-=======
                 @if(Auth::user() instanceof \App\Models\Agency)
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">Assigned Inquiries</h1>
                     <p class="text-gray-600">View and manage inquiries assigned to your agency with complete history tracking</p>
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                 @else
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">My Inquiries</h1>
                     <p class="text-gray-600">View and manage your inquiry submissions</p>
                 @endif
             </div>
             <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
-<<<<<<< HEAD
-                @if(!isset($isMCMC) || !$isMCMC)
-=======
                 @if(Auth::user() instanceof \App\Models\Agency)
                     <a href="{{ route('assignments.index') }}" 
                        class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
@@ -36,7 +27,6 @@
                         <i class="fas fa-chart-bar mr-2"></i>Generate Report
                     </a>
                 @else
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                     <a href="{{ route('inquiries.public') }}" 
                        class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                         <i class="fas fa-globe mr-2"></i>Public Inquiries
@@ -45,18 +35,6 @@
                        class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                         <i class="fas fa-plus mr-2"></i>New Inquiry
                     </a>
-<<<<<<< HEAD
-                @else
-                    <a href="{{ route('assignments.index') }}" 
-                       class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                        <i class="fas fa-tasks mr-2"></i>Manage Assignments
-                    </a>
-                    <a href="{{ route('inquiries.report') }}" 
-                       class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
-                        <i class="fas fa-chart-bar mr-2"></i>Generate Reports
-                    </a>
-=======
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                 @endif
             </div>
         </div>
@@ -363,13 +341,8 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-<<<<<<< HEAD
-                                    @if(isset($isMCMC) && $isMCMC)
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted By</th>
-=======
                                     @if(Auth::user() instanceof \App\Models\Agency)
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                                     @endif
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -386,25 +359,12 @@
                                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $inquiry->I_ID }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">{{ $inquiry->I_Title }}</td>
-<<<<<<< HEAD
-                                        @if(isset($isMCMC) && $isMCMC)
-                                            <td class="px-6 py-4 text-sm text-gray-900">
-                                                @if($inquiry->publicUser)
-                                                    <div class="flex flex-col">
-                                                        <span class="font-medium text-gray-900">{{ $inquiry->publicUser->PU_Name }}</span>
-                                                        <span class="text-xs text-gray-500">{{ $inquiry->publicUser->PU_Email }}</span>
-                                                    </div>
-                                                @else
-                                                    <span class="text-gray-400 italic">User not found</span>
-                                                @endif
-=======
                                         @if(Auth::user() instanceof \App\Models\Agency)
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 <div>
                                                     <div class="font-medium">{{ $inquiry->publicUser->PU_Name ?? 'N/A' }}</div>
                                                     <div class="text-gray-500">{{ $inquiry->publicUser->PU_Email ?? 'N/A' }}</div>
                                                 </div>
->>>>>>> 804df42741fb944a71d1fafd294f8cc8c4fcdbb8
                                             </td>
                                         @endif
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $inquiry->I_Category }}</td>

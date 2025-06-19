@@ -29,6 +29,10 @@ class Agency extends Authenticatable
         'A_Password'
     ];
 
+    protected $casts = [
+        'A_Category' => 'array',
+    ];
+
     protected $hidden = [
         'A_Password',
     ];
@@ -80,5 +84,42 @@ class Agency extends Authenticatable
     public function complaints()
     {
         return $this->hasMany(Complaint::class, 'A_ID', 'A_ID');
+    }
+
+    // Helper method to check if agency handles a specific category
+    // Modified to allow agencies to accept all categories of inquiry
+    public function canHandle($category)
+    {
+        // Allow agencies to accept all categories regardless of their specified categories
+        return true;
+        
+        // Original logic (commented out):
+        // return in_array($category, $this->A_Category ?? []);
+    }
+
+    // Helper method to get categories as array
+    public function getCategoriesAttribute()
+    {
+        return $this->A_Category ?? [];
+    }
+
+    // Helper method to get categories as string for display
+    public function getCategoriesStringAttribute()
+    {
+        if (is_array($this->A_Category)) {
+            return implode(', ', $this->A_Category);
+        }
+        return $this->A_Category ?? 'N/A';
+    }
+
+    // Scope to find agencies that handle a specific category
+    // Modified to return all agencies regardless of category
+    public function scopeHandlesCategory($query, $category)
+    {
+        // Return all agencies since they can now handle any category
+        return $query;
+        
+        // Original logic (commented out):
+        // return $query->whereRaw('JSON_CONTAINS(A_Category, ?)', [json_encode($category)]);
     }
 }

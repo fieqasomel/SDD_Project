@@ -7,6 +7,7 @@ use App\Models\Agency;
 use App\Models\Complaint;
 use App\Models\MCMC;
 use App\Models\PublicUser;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,57 +23,110 @@ class ComplaintController extends Controller
         $user = Auth::user();
         $userType = $this->getUserType($user);
         
-        // Only MCMC users can access assignment management
-        if ($userType !== 'mcmc') {
+        // Handle different user types
+        if ($userType === 'mcmc') {
+            // MCMC users see all assignments with administrative functions
+            $query = Complaint::with(['inquiry.publicUser', 'agency', 'mcmc']);
+            
+            // Apply search filters
+            if ($request->filled('search')) {
+                $query->whereHas('inquiry', function($q) use ($request) {
+                    $q->where('I_Title', 'like', "%{$request->search}%")
+                      ->orWhere('I_Description', 'like', "%{$request->search}%");
+                });
+            }
+            
+            if ($request->filled('agency')) {
+                $query->where('A_ID', $request->agency);
+            }
+            
+            if ($request->filled('date_from') && $request->filled('date_to')) {
+                $query->byDateRange($request->date_from, $request->date_to);
+            }
+            
+            $assignments = $query->orderBy('C_AssignedDate', 'desc')->paginate(10);
+            
+            // Get unassigned inquiries (for assign button)
+            $unassignedInquiries = Inquiry::with('publicUser')
+                                         ->where('I_Status', 'Pending')
+                                         ->whereNotExists(function ($query) {
+                                             $query->select(DB::raw(1))
+                                                   ->from('complaint')
+                                                   ->whereColumn('complaint.I_ID', 'inquiry.I_ID');
+                                         })
+                                         ->orderBy('I_Date', 'desc')
+                                         ->limit(10)
+                                         ->get();
+                                         
+        } elseif ($userType === 'agency') {
+            // Agency users see only assignments for their agency
+            $query = Complaint::with(['inquiry.publicUser', 'agency', 'mcmc'])
+                             ->where('A_ID', $user->A_ID);
+            
+            // Apply search filters
+            if ($request->filled('search')) {
+                $query->whereHas('inquiry', function($q) use ($request) {
+                    $q->where('I_Title', 'like', "%{$request->search}%")
+                      ->orWhere('I_Description', 'like', "%{$request->search}%");
+                });
+            }
+            
+            if ($request->filled('date_from') && $request->filled('date_to')) {
+                $query->byDateRange($request->date_from, $request->date_to);
+            }
+            
+            $assignments = $query->orderBy('C_AssignedDate', 'desc')->paginate(10);
+            $unassignedInquiries = collect(); // Empty collection for agency users
+            
+        } elseif ($userType === 'public') {
+            // Public users see their own assignments
+            $query = Complaint::with(['inquiry.publicUser', 'agency', 'mcmc'])
+                             ->whereHas('inquiry', function($q) use ($user) {
+                                 $q->where('PU_ID', $user->PU_ID);
+                             });
+            
+            // Apply search filters
+            if ($request->filled('search')) {
+                $query->whereHas('inquiry', function($q) use ($request) {
+                    $q->where('I_Title', 'like', "%{$request->search}%")
+                      ->orWhere('I_Description', 'like', "%{$request->search}%");
+                });
+            }
+            
+            if ($request->filled('agency')) {
+                $query->where('A_ID', $request->agency);
+            }
+            
+            if ($request->filled('status')) {
+                $query->whereHas('inquiry', function($q) use ($request) {
+                    $q->where('I_Status', $request->status);
+                });
+            }
+            
+            if ($request->filled('date_from') && $request->filled('date_to')) {
+                $query->byDateRange($request->date_from, $request->date_to);
+            }
+            
+            $assignments = $query->orderBy('C_AssignedDate', 'desc')->paginate(10);
+            $unassignedInquiries = collect(); // Empty collection for public users
+            
+        } else {
             return redirect()->route('inquiries.index')->with('error', 'You do not have permission to manage assignments.');
         }
-        
-        // Get assignments with filters
-        $query = Complaint::with(['inquiry.publicUser', 'agency', 'mcmc']);
-        
-        // Apply search filters
-        if ($request->filled('search')) {
-            $query->whereHas('inquiry', function($q) use ($request) {
-                $q->where('I_Title', 'like', "%{$request->search}%")
-                  ->orWhere('I_Description', 'like', "%{$request->search}%");
-            });
-        }
-        
-        if ($request->filled('agency')) {
-            $query->where('A_ID', $request->agency);
-        }
-        
-        if ($request->filled('date_from') && $request->filled('date_to')) {
-            $query->byDateRange($request->date_from, $request->date_to);
-        }
-        
-        $assignments = $query->orderBy('C_AssignedDate', 'desc')->paginate(10);
         
         // Get agencies for filter dropdown
         $agencies = Agency::orderBy('A_Name')->get();
         
-        // Get statistics
-        $stats = $this->getAssignmentStats();
+        // Get statistics based on user type
+        $stats = $this->getAssignmentStats($userType, $user);
         
-        // Get unassigned inquiries (for assign button)
-        $unassignedInquiries = Inquiry::with('publicUser')
-                                     ->where('I_Status', 'Pending')
-                                     ->whereNotExists(function ($query) {
-                                         $query->select(DB::raw(1))
-                                               ->from('complaint')
-                                               ->whereColumn('complaint.I_ID', 'inquiry.I_ID');
-                                     })
-                                     ->orderBy('I_Date', 'desc')
-                                     ->limit(10)
-                                     ->get();
-        
-        return view('ManageAssignment.ManageAssignments', compact('assignments', 'agencies', 'stats', 'unassignedInquiries'));
+        return view('ManageAssignment.ManageAssignments', compact('assignments', 'agencies', 'stats', 'unassignedInquiries', 'userType'));
     }
 
     /**
      * Show form to assign inquiry to agency
      */
-    public function assignInquiry($inquiryId)
+    public function assignInquiry($inquiry)
     {
         $user = Auth::user();
         $userType = $this->getUserType($user);
@@ -81,20 +135,19 @@ class ComplaintController extends Controller
             return redirect()->route('inquiries.index')->with('error', 'You do not have permission to assign inquiries.');
         }
         
-        $inquiry = Inquiry::with('publicUser')->findOrFail($inquiryId);
+        $inquiry = Inquiry::with('publicUser')->findOrFail($inquiry);
         
         // Check if inquiry is already assigned
         if ($inquiry->isAssigned()) {
             return redirect()->route('assignments.index')->with('error', 'This inquiry is already assigned.');
         }
         
-        // Get agencies that match the inquiry category
-        $agencies = Agency::where('A_Category', $inquiry->I_Category)->orderBy('A_Name')->get();
+        // Get all agencies (they can now handle any inquiry category)
+        $agencies = Agency::orderBy('A_Name')->get();
         
         if ($agencies->isEmpty()) {
-            return redirect()->route('assignments.index')->with('error', 'No agencies found for this inquiry category.');
+            return redirect()->route('assignments.index')->with('error', 'No agencies available in the system.');
         }
-        
         return view('ManageAssignment.AssignInquiry', compact('inquiry', 'agencies'));
     }
 
@@ -124,10 +177,11 @@ class ComplaintController extends Controller
         
         $agency = Agency::findOrFail($request->agency_id);
         
-        // Verify agency category matches inquiry category
-        if ($agency->A_Category !== $inquiry->I_Category) {
-            return redirect()->back()->with('error', 'Selected agency does not handle this inquiry category.');
-        }
+        // Verify agency can handle inquiry category (removed restriction)
+        // Agencies can now accept all categories of inquiries
+        // if (!$agency->canHandle($inquiry->I_Category)) {
+        //     return redirect()->back()->with('error', 'Selected agency does not handle this inquiry category.');
+        // }
         
         DB::transaction(function () use ($inquiry, $agency, $user, $request) {
             // Create complaint record (assignment)
@@ -166,9 +220,8 @@ class ComplaintController extends Controller
         
         $complaint = Complaint::with(['inquiry.publicUser', 'agency'])->findOrFail($complaintId);
         
-        // Get agencies that match the inquiry category (excluding current agency)
-        $agencies = Agency::where('A_Category', $complaint->inquiry->I_Category)
-                          ->where('A_ID', '!=', $complaint->A_ID)
+        // Get all agencies (excluding current agency)
+        $agencies = Agency::where('A_ID', '!=', $complaint->A_ID)
                           ->orderBy('A_Name')
                           ->get();
         
@@ -200,10 +253,11 @@ class ComplaintController extends Controller
         $newAgency = Agency::findOrFail($request->agency_id);
         $oldAgency = $complaint->agency;
         
-        // Verify new agency category matches inquiry category
-        if ($newAgency->A_Category !== $complaint->inquiry->I_Category) {
-            return redirect()->back()->with('error', 'Selected agency does not handle this inquiry category.');
-        }
+        // Verify new agency can handle inquiry category (removed restriction)
+        // Agencies can now accept all categories of inquiries
+        // if (!$newAgency->canHandle($complaint->inquiry->I_Category)) {
+        //     return redirect()->back()->with('error', 'Selected agency does not handle this inquiry category.');
+        // }
         
         DB::transaction(function () use ($complaint, $newAgency, $oldAgency, $user, $request) {
             // Update complaint record and reset verification status
@@ -281,11 +335,7 @@ class ComplaintController extends Controller
         }
         
         $request->validate([
-            'status' => 'required|string|in:' . implode(',', [
-                Inquiry::STATUS_IN_PROGRESS,
-                Inquiry::STATUS_RESOLVED,
-                Inquiry::STATUS_CLOSED
-            ]),
+            'status' => 'required|string|in:In Progress,Resolved,Closed',
             'comment' => 'required|string|max:1000'
         ]);
         
@@ -347,28 +397,62 @@ class ComplaintController extends Controller
     /**
      * Get assignment statistics
      */
-    private function getAssignmentStats()
+    private function getAssignmentStats($userType = 'mcmc', $user = null)
     {
-        $allAssignments = Complaint::with('inquiry')->get();
+        $query = Complaint::with('inquiry');
+        
+        // Filter based on user type
+        if ($userType === 'agency' && $user) {
+            $query->where('A_ID', $user->A_ID);
+        } elseif ($userType === 'public' && $user) {
+            $query->whereHas('inquiry', function($q) use ($user) {
+                $q->where('PU_ID', $user->PU_ID);
+            });
+        }
+        
+        $allAssignments = $query->get();
         
         $stats = [
             'total_assignments' => $allAssignments->count(),
             'pending' => $allAssignments->filter(function($assignment) {
-                return $assignment->inquiry->I_Status === Inquiry::STATUS_PENDING;
+                return $assignment->inquiry->I_Status === 'Pending';
             })->count(),
             'in_progress' => $allAssignments->filter(function($assignment) {
-                return $assignment->inquiry->I_Status === Inquiry::STATUS_IN_PROGRESS;
+                return $assignment->inquiry->I_Status === 'In Progress';
             })->count(),
             'resolved' => $allAssignments->filter(function($assignment) {
-                return $assignment->inquiry->I_Status === Inquiry::STATUS_RESOLVED;
+                return $assignment->inquiry->I_Status === 'Resolved';
             })->count(),
             'closed' => $allAssignments->filter(function($assignment) {
-                return $assignment->inquiry->I_Status === Inquiry::STATUS_CLOSED;
+                return $assignment->inquiry->I_Status === 'Closed';
             })->count(),
             'this_month' => $allAssignments->filter(function($assignment) {
                 return Carbon::parse($assignment->C_AssignedDate)->isCurrentMonth();
             })->count(),
         ];
+        
+        // Add additional stats for public users
+        if ($userType === 'public') {
+            $totalInquiries = $user ? Inquiry::where('PU_ID', $user->PU_ID)->count() : 0;
+            $assigned = $allAssignments->count();
+            
+            $stats['total_inquiries'] = $totalInquiries;
+            $stats['assigned'] = $assigned;
+        }
+        
+        // Add additional stats for agency users
+        if ($userType === 'agency') {
+            $stats['total_assigned_to_agency'] = $allAssignments->count();
+            $stats['awaiting_verification'] = $allAssignments->filter(function($assignment) {
+                return $assignment->C_VerificationStatus === 'Pending';
+            })->count();
+            $stats['verified_by_agency'] = $allAssignments->filter(function($assignment) {
+                return $assignment->C_VerificationStatus === 'Accepted';
+            })->count();
+            $stats['rejected_by_agency'] = $allAssignments->filter(function($assignment) {
+                return $assignment->C_VerificationStatus === 'Rejected';
+            })->count();
+        }
         
         return $stats;
     }
@@ -408,8 +492,9 @@ class ComplaintController extends Controller
         }
         
         $request->validate([
-            'verification' => 'required|string|in:accept,reject',
-            'reason' => 'required_if:verification,reject|nullable|string|max:1000'
+            'verification_action' => 'required|string|in:accept,reject',
+            'rejection_reason' => 'required_if:verification_action,reject|nullable|string|max:1000',
+            'verification_comment' => 'nullable|string|max:1000'
         ]);
         
         $complaint = Complaint::with('inquiry')->findOrFail($complaintId);
@@ -420,7 +505,7 @@ class ComplaintController extends Controller
         }
         
         DB::transaction(function () use ($complaint, $request, $user) {
-            if ($request->verification === 'accept') {
+            if ($request->verification_action === 'accept') {
                 // Accept the assignment
                 $complaint->update([
                     'C_VerificationStatus' => Complaint::VERIFICATION_ACCEPTED,
@@ -431,33 +516,38 @@ class ComplaintController extends Controller
                 // Update inquiry status to in progress
                 $complaint->inquiry->update(['I_Status' => Inquiry::STATUS_IN_PROGRESS]);
                 
-                // Add history entry
-                $complaint->addHistory(
-                    'Assignment verified and accepted by agency. Inquiry status updated to In Progress.',
-                    $user->A_ID,
-                    'Agency'
-                );
+                // Add history entry with optional comment
+                $historyMessage = 'Assignment verified and accepted by agency. Inquiry status updated to In Progress.';
+                if ($request->verification_comment) {
+                    $historyMessage .= ' Comment: ' . $request->verification_comment;
+                }
+                
+                $complaint->addHistory($historyMessage, $user->A_ID, 'Agency');
+                
             } else {
                 // Reject the assignment
                 $complaint->update([
                     'C_VerificationStatus' => Complaint::VERIFICATION_REJECTED,
                     'C_VerificationDate' => Carbon::now()->toDateString(),
                     'C_VerifiedBy' => $user->A_ID,
-                    'C_RejectionReason' => $request->reason
+                    'C_RejectionReason' => $request->rejection_reason
                 ]);
                 
                 // Add history entry
                 $complaint->addHistory(
-                    'Assignment rejected by agency. Reason: ' . $request->reason,
+                    'Assignment rejected by agency. Reason: ' . $request->rejection_reason,
                     $user->A_ID,
                     'Agency'
                 );
+                
+                // Create notification for MCMC
+                Notification::createRejectionNotification($complaint, $request->rejection_reason);
             }
         });
         
-        $message = $request->verification === 'accept' 
+        $message = $request->verification_action === 'accept' 
             ? 'Assignment accepted successfully. You can now start working on this inquiry.' 
-            : 'Assignment rejected successfully. MCMC will be notified.';
+            : 'Assignment rejected successfully. MCMC has been notified and will reassign this inquiry.';
         
         return redirect()->route('assignments.view', $complaintId)->with('success', $message);
     }
@@ -496,6 +586,48 @@ class ComplaintController extends Controller
         }
         
         return 'unknown';
+    }
+
+    /**
+     * View notifications for MCMC
+     */
+    public function viewNotifications()
+    {
+        $user = Auth::user();
+        $userType = $this->getUserType($user);
+        
+        if ($userType !== 'mcmc') {
+            return redirect()->route('assignments.index')->with('error', 'Only MCMC users can view notifications.');
+        }
+        
+        $notifications = Notification::where('P_ID', $user->M_ID)
+                                   ->orderBy('N_Timestamp', 'desc')
+                                   ->paginate(15);
+        
+        return view('ManageAssignment.Notifications', compact('notifications'));
+    }
+
+    /**
+     * Mark notification as read
+     */
+    public function markNotificationAsRead($notificationId)
+    {
+        $user = Auth::user();
+        $userType = $this->getUserType($user);
+        
+        if ($userType !== 'mcmc') {
+            return redirect()->route('assignments.index')->with('error', 'Unauthorized access.');
+        }
+        
+        $notification = Notification::where('N_ID', $notificationId)
+                                  ->where('P_ID', $user->M_ID)
+                                  ->first();
+        
+        if ($notification) {
+            $notification->markAsRead();
+        }
+        
+        return redirect()->back()->with('success', 'Notification marked as read.');
     }
 
     /**
