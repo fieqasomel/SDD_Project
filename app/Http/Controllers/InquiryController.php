@@ -636,7 +636,7 @@ class InquiryController extends Controller
 
         $inquiries = $query->orderBy('I_Date', 'desc')->get();
 
-        return view('ManageInquiry.SearchInquiries', compact('inquiries'));
+        return view('ManageInquiry.SearchInquiry', compact('inquiries'));
     }
 
     /**

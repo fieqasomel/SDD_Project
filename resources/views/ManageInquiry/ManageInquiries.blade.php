@@ -404,7 +404,7 @@
                                                     <i class="fas fa-eye mr-1"></i>View
                                                 </a>
                                                 
-                                                @if(isset($isPublicUser) && $isPublicUser)
+                                                @if(Auth::user() instanceof \App\Models\PublicUser)
                                                     <!-- Public User Actions -->
                                                     @if($inquiry->I_Status === 'Pending')
                                                         <!-- Edit Button -->
